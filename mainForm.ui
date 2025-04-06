@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1440</width>
+    <height>752</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string> Детектор дефектов картофеля</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QWidget" name="horizontalLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>1161</width>
+      <height>711</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>-1</number>
+     </property>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QLabel" name="camera_status">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>18</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>17</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+                color: red;
+			   font-weight: bold;
+            }</string>
+         </property>
+         <property name="text">
+          <string>Камера выключена</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>100</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>960</width>
+           <height>500</height>
+          </size>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Box</enum>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="objects_count">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>18</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>17</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+                color: red;
+			   font-weight: bold;
+            }</string>
+         </property>
+         <property name="text">
+          <string>Количество объектов:  0</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTextBrowser" name="textBrowser">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>100</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>16</pointsize>
+          </font>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QPushButton" name="cam_on_button">
+         <property name="styleSheet">
+          <string notr="true">		   QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                font-weight: bold;
+                border: 2px solid #c0392b;
+                border-radius: 8px;
+                padding: 5px;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+            QPushButton:pressed {
+                background-color: #922b21;
+            }
+		  QPushButton:disabled {
+    			  background-color: #95a5a6; /* Серый цвет для неактивной кнопки */
+    			  color: #bdc3c7; /* Бледный текст */
+    			  border: 1px solid #7f8c8d;
+		  }</string>
+         </property>
+         <property name="text">
+          <string>Включить
+ камеру</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="cam_off_button">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                font-weight: bold;
+                border: 2px solid #c0392b;
+                border-radius: 8px;
+                padding: 5px;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+            QPushButton:pressed {
+                background-color: #922b21;
+            }
+		  QPushButton:disabled {
+    			  background-color: #95a5a6; /* Серый цвет для неактивной кнопки */
+    			  color: #bdc3c7; /* Бледный текст */
+    			  border: 1px solid #7f8c8d;
+		  }</string>
+         </property>
+         <property name="text">
+          <string>Выключить
+ камеру</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="calibrate_button">
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                font-weight: bold;
+                border: 2px solid #c0392b;
+                border-radius: 8px;
+                padding: 5px;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+            QPushButton:pressed {
+                background-color: #922b21;
+            }</string>
+         </property>
+         <property name="text">
+          <string>Выполнить
+ калибровку</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="null_counter_button">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                font-weight: bold;
+                border: 2px solid #c0392b;
+                border-radius: 8px;
+                padding: 5px;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+            QPushButton:pressed {
+                background-color: #922b21;
+            }
+		  QPushButton:disabled {
+    			  background-color: #95a5a6; /* Серый цвет для неактивной кнопки */
+    			  color: #bdc3c7; /* Бледный текст */
+    			  border: 1px solid #7f8c8d;
+		  }</string>
+         </property>
+         <property name="text">
+          <string>Сбросить
+ счетчик</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="exit_button">
+         <property name="styleSheet">
+          <string notr="true">QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                font-weight: bold;
+                border: 2px solid #c0392b;
+                border-radius: 8px;
+                padding: 5px;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+            QPushButton:pressed {
+                background-color: #922b21;
+            }</string>
+         </property>
+         <property name="text">
+          <string>Завершить
+ работу</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1440</width>
+     <height>24</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
