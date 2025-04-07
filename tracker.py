@@ -1,13 +1,15 @@
+import time
+from collections import OrderedDict
+from typing import List
+
 import cv2
 import numpy as np
-from ultralytics import YOLO
 from norfair import Detection, Tracker, draw_points
+from ultralytics import YOLO
+
 from configs import MainConfigs
-import time
+from constants import Color, Messages
 from potato_object import PotatoObject
-from collections import OrderedDict
-from constants import Messages, Color
-from typing import List
 
 
 class PotatoTracker:
@@ -60,28 +62,50 @@ class PotatoTracker:
 
             first_stage_scanning_objects, second_stage_scanning_objects, third_stage_scanning_objects = [], [], []
 
-            stage_switch = {0: ["first_section_scanned", "first_section_middle", first_stage_scanning_objects, Messages.FIRST_STAGE_ADDED],
-                            1: ["second_section_scanned", "second_section_middle", second_stage_scanning_objects, Messages.SECOND_STAGE_ADDED],
-                            2: ["third_section_scanned", "third_section_middle", third_stage_scanning_objects, Messages.THIRD_STAGE_ADDED]}
+            stage_switch = {
+                0: [
+                    "first_section_scanned",
+                    "first_section_middle",
+                    first_stage_scanning_objects,
+                    Messages.FIRST_STAGE_ADDED,
+                ],
+                1: [
+                    "second_section_scanned",
+                    "second_section_middle",
+                    second_stage_scanning_objects,
+                    Messages.SECOND_STAGE_ADDED,
+                ],
+                2: [
+                    "third_section_scanned",
+                    "third_section_middle",
+                    third_stage_scanning_objects,
+                    Messages.THIRD_STAGE_ADDED,
+                ],
+            }
 
             for _id, potato_obj in self.active_potato_objects.items():
                 for stage in range(0, 3):
-                    if (not potato_obj.__getattribute__(stage_switch[stage][0]) and
-                            abs(potato_obj.center[0] - self.__getattribute__(stage_switch[stage][1])) < MainConfigs.SCANNING_WINDOW and
-                            _id not in self.potato_defects_queue):
+                    if (
+                        not potato_obj.__getattribute__(stage_switch[stage][0])
+                        and abs(potato_obj.center[0] - self.__getattribute__(stage_switch[stage][1]))
+                        < MainConfigs.SCANNING_WINDOW
+                        and _id not in self.potato_defects_queue
+                    ):
                         stage_switch[stage][2].append(_id)
                         text_browser.append(f"{_id} {stage_switch[stage][3]}")
                         break
 
-            stage_switch = {0: [first_stage_scanning_objects, Messages.FIRST_STAGE_SCANNED, "first_section_scanned"],
-                            1: [second_stage_scanning_objects, Messages.SECOND_STAGE_SCANNED, "second_section_scanned"],
-                            2: [third_stage_scanning_objects, Messages.THIRD_STAGE_SCANNED, "third_section_scanned"]}
+            stage_switch = {
+                0: [first_stage_scanning_objects, Messages.FIRST_STAGE_SCANNED, "first_section_scanned"],
+                1: [second_stage_scanning_objects, Messages.SECOND_STAGE_SCANNED, "second_section_scanned"],
+                2: [third_stage_scanning_objects, Messages.THIRD_STAGE_SCANNED, "third_section_scanned"],
+            }
 
             for stage in range(0, 3):
                 for _id in stage_switch[stage][0]:
                     potato_obj = self.active_potato_objects[_id]
                     x0, y0, x1, y1 = potato_obj.bounds
-                    sub_img = frame[int(y0):int(y1), int(x0):int(x1)]
+                    sub_img = frame[int(y0) : int(y1), int(x0) : int(x1)]
                     res = self.defects_detector(sub_img, verbose=False)
                     for damage_box in res[0].boxes.data:
                         if damage_box[-2] > MainConfigs.DEFECTS_DETECTION_CONFIDENCE_THRESHOLD:

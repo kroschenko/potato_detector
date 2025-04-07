@@ -1,12 +1,15 @@
 import gi
-gi.require_version('Aravis', '0.8')
-import cv2
-import numpy as np
+
+gi.require_version("Aravis", "0.8")
 import ctypes
-from gi.repository import Aravis
-from configs import MainConfigs
 from abc import abstractmethod
 from typing import Any, Optional
+
+import cv2
+import numpy as np
+from gi.repository import Aravis
+
+from configs import MainConfigs
 
 
 class Camera:

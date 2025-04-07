@@ -1,36 +1,32 @@
 import time
 
-from PyQt6 import uic
-from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
 import cv2
-from PyQt6.QtCore import QTimer, Qt, QThread, QObject
-from PyQt6.QtGui import QImage, QPixmap
-from configs import MainConfigs
-from tracker import PotatoTracker
-from factories import CameraFactory
-from constants import Messages
-# from collections import OrderedDict
 import serial
-import queue
+from PyQt6 import uic
+from PyQt6.QtCore import QObject, Qt, QThread, QTimer
+from PyQt6.QtGui import QImage, QPixmap
+from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
+
+from configs import MainConfigs
+from constants import Messages
+from factories import CameraFactory
+from tracker import PotatoTracker
 
 potato_defects_queue = []
 potato_timing_queue = []
 
-# potato_defects_queue = queue.Queue()
-# potato_timing_queue = queue.Queue()
-
 
 class Worker(QObject):
-    # finished = pyqtSignal()
-    # progress = pyqtSignal(int)
 
-    switch = {0: MainConfigs.FIRST_STAGE_TIME_DELAY,
-              1: MainConfigs.SECOND_STAGE_TIME_DELAY,
-              2: MainConfigs.THIRD_STAGE_TIME_DELAY}
+    switch = {
+        0: MainConfigs.FIRST_STAGE_TIME_DELAY,
+        1: MainConfigs.SECOND_STAGE_TIME_DELAY,
+        2: MainConfigs.THIRD_STAGE_TIME_DELAY,
+    }
 
     def __init__(self):
         super().__init__()
-        self.arduino = serial.Serial('/dev/cu.usbserial-120', 9600)
+        self.arduino = serial.Serial(MainConfigs.ARDUINO_PATH, 9600)
 
     def send_impulse(self, duration: int):
         x = str(duration)
@@ -68,11 +64,12 @@ class MyApp(QMainWindow):
         self.cam_off_button.clicked.connect(self.deactivate_camera)
         self.null_counter_button.clicked.connect(self.null_objects_count)
         self.calibrate_button.clicked.connect(self.calibrate)
-        self.serial_interface_thread = QThread()
-        self.worker = Worker()
-        self.worker.moveToThread(self.serial_interface_thread)
-        self.serial_interface_thread.started.connect(self.worker.run)
-        self.serial_interface_thread.start()
+        if MainConfigs.USE_AIR:
+            self.serial_interface_thread = QThread()
+            self.worker = Worker()
+            self.worker.moveToThread(self.serial_interface_thread)
+            self.serial_interface_thread.started.connect(self.worker.run)
+            self.serial_interface_thread.start()
 
     def calibrate(self):
         pass
@@ -85,7 +82,9 @@ class MyApp(QMainWindow):
         # Запуск камеры
         if not self.camera_activated:
             if self.camera is None:
-                self.camera = CameraFactory.get_camera_device(MainConfigs.PREFERRED_CAMERA_DEVICE, "video/2025-01-09_15-19-24_639.avi")
+                self.camera = CameraFactory.get_camera_device(
+                    MainConfigs.PREFERRED_CAMERA_DEVICE, "video/2025-01-09_15-19-24_639.avi"
+                )
             if self.camera.device_is_activated():
                 self.camera_activated = True
                 self.camera.start_stream()

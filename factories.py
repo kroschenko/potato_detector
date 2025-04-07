@@ -1,5 +1,6 @@
 from typing import Any
-from camera import OpenCVCamera, DO3ThinkCamera, Camera
+
+from camera import Camera, DO3ThinkCamera, OpenCVCamera
 from main_types import CameraType
 
 

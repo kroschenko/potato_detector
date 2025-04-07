@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Any, Tuple
+
 from main_types import CameraType
 
 
@@ -33,3 +34,5 @@ class MainConfigs:
     FIRST_STAGE_TIME_DELAY: int = 3
     SECOND_STAGE_TIME_DELAY: int = 2
     THIRD_STAGE_TIME_DELAY: int = 1
+    ARDUINO_PATH: str = "/dev/cu.usbserial-120"
+    USE_AIR: bool = False
