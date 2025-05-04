@@ -99,14 +99,14 @@
 с использованием пневмоотталкивателя) используется плата Arduino Nano. Распиновка
 данной платы представлена на рисунке ниже.
 
-![alt text](https://github.com/kroschenko/potato_detector/main/arduino_nano.png?raw=true)
+![alt text](https://github.com/kroschenko/potato_detector/blob/main/images/arduino_nano.png?raw=true)
 
 Для перепрошивки платы Arduino лучше всего использовать среду разработки Arduino IDE.
 
 Данная среда предоставляет возможность редактирования исходного кода прошивки и 
 загрузки новой версии в плату микроконтроллера.
 
-![alt text](https://github.com/kroschenko/potato_detector/main/arduino_ide.png?raw=true)
+![alt text](https://github.com/kroschenko/potato_detector/blob/main/images/arduino_ide.png?raw=true)
 
 Перед началом работы необходимо выбрать параметры:
 
@@ -120,7 +120,9 @@
 Для осуществления прошивки необходимо опционально выполнить компиляцию
 прошивки под выбранную рабочую плату и загрузить ее в микроконтроллер.
 
-![alt text](https://github.com/kroschenko/potato_detector/main/image.jpg?raw=true)
+![alt text](https://github.com/kroschenko/potato_detector/blob/main/images/compile.png?raw=true)
+
+![alt text](https://github.com/kroschenko/potato_detector/blob/main/images/load.png?raw=true)
 
 ## Известные проблемы при запуске
 1. В некоторых случаях камера может быть недоступной при запуске, это связано с тем,
