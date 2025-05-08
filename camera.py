@@ -1,4 +1,5 @@
 import gi
+import logging
 
 gi.require_version("Aravis", "0.8")
 import ctypes
@@ -10,7 +11,7 @@ import numpy as np
 from gi.repository import Aravis
 
 from configs import MainConfigs
-
+from logger_config import logger
 
 class Camera:
     def __init__(self, cam_descriptor: Any):
@@ -98,5 +99,96 @@ class OpenCVCamera(Camera):
         return frame
 
     def stop_stream(self):
+        self.device.release()
+
+
+class AVICamera(Camera):
+    def __init__(self, avi_path: str = None, fps: int = None, loop: bool = None, start_frame: int = None):
+        if avi_path is None:
+            avi_path = MainConfigs.AVI_CAMERA_PATH
+
+        if fps is None:
+            fps = MainConfigs.AVI_CAMERA_FPS
+        if loop is None:
+            loop = MainConfigs.AVI_CAMERA_LOOP
+        if start_frame is None:
+            start_frame = MainConfigs.AVI_CAMERA_START_FRAME
+            
+        super().__init__(avi_path)
+        logger.info("Initializing AVI camera")
+        logger.debug(f"Video path: {avi_path}")
+        logger.debug(f"Target FPS: {fps}")
+        logger.debug(f"Loop enabled: {loop}")
+        logger.debug(f"Start frame: {start_frame}")
+        
+        self.device = cv2.VideoCapture(avi_path)
+        if not self.device.isOpened():
+            logger.error(f"Could not open video file: {avi_path}")
+        else:
+            logger.info("Video opened successfully")
+            # Log detailed camera information
+            from utils import log_camera_info
+            log_camera_info(self)
+            
+            # Set the starting frame if specified
+            if start_frame > 0:
+                success = self.device.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+                if success:
+                    logger.info(f"Successfully set start frame to: {start_frame}")
+                else:
+                    logger.warning(f"Failed to set start frame to {start_frame}")
+        
+        self.fps = fps
+        self.loop = loop
+        self.frame_count = int(self.device.get(cv2.CAP_PROP_FRAME_COUNT))
+        self.current_frame = start_frame if start_frame > 0 else 0
+        self.last_frame_time = 0
+        self.frame_delay = 1000 / fps  # Convert FPS to milliseconds delay
+        logger.debug(f"Frame delay set to: {self.frame_delay:.2f}ms")
+
+    def device_is_activated(self) -> bool:
+        is_activated = self.device is not None and self.device.isOpened()
+        if not is_activated:
+            logger.error("Device is not activated")
+        return is_activated
+
+    def start_stream(self):
+        self.last_frame_time = 0
+        logger.info(f"Stream started at frame {self.current_frame}")
+        # Log camera info when stream starts
+        from utils import log_camera_info
+        log_camera_info(self)
+
+    def get_next_frame(self):
+        frame = None
         if self.device.isOpened():
+            current_time = cv2.getTickCount() / cv2.getTickFrequency() * 1000  # Current time in milliseconds
+            
+            # Check if enough time has passed since last frame based on FPS
+            if current_time - self.last_frame_time >= self.frame_delay:
+                ret, frame = self.device.read()
+                if not ret:
+                    logger.info(f"End of video reached at frame {self.current_frame}")
+                    if self.loop:
+                        logger.info("Looping back to start of video")
+                        self.device.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        ret, frame = self.device.read()
+                        if ret:
+                            logger.info("Successfully looped to start")
+                        else:
+                            logger.error("Failed to read frame after loop")
+                if ret:
+                    self.last_frame_time = current_time
+                    self.current_frame = (self.current_frame + 1) % self.frame_count
+                    if self.current_frame % 100 == 0:  # Log every 100 frames
+                        #logger.info(f"Processing frame {self.current_frame}/{self.frame_count}")
+                        # Log detailed camera info every 1000 frames
+                        if self.current_frame % 1000 == 0:
+                            from utils import log_camera_info
+                            log_camera_info(self)
+        return frame
+
+    def stop_stream(self):
+        if self.device is not None:
             self.device.release()
+            logger.info("Stream stopped and resources released")

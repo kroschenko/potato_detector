@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import os
 from typing import Any, Tuple
 
 from main_types import CameraType
@@ -23,7 +24,6 @@ class MainConfigs:
                     font-weight: bold; 
                 }
             """
-    PREFERRED_CAMERA_DEVICE: CameraType = CameraType.OPENCV_CAMERA
     POTATO_DETECTION_CONFIDENCE_THRESHOLD: float = 0.75
     DEFECTS_DETECTION_CONFIDENCE_THRESHOLD: float = 0.75
     SCANNING_WINDOW: int = 50
@@ -34,5 +34,26 @@ class MainConfigs:
     FIRST_STAGE_TIME_DELAY: int = 3
     SECOND_STAGE_TIME_DELAY: int = 2
     THIRD_STAGE_TIME_DELAY: int = 1
-    ARDUINO_PATH: str = "/dev/cu.usbserial-120"
-    USE_AIR: bool = False
+    ARDUINO_PATH: str = "/dev/ttyUSB0" #"/dev/cu.usbserial-120"
+
+    SAVE_PATH: str = os.path.join(os.path.expanduser("~"), "frames")
+    # AVI file camera emulation settings
+    # not used USE_AVI_CAMERA: bool = False
+
+    AVI_CAMERA_LOOP: bool = True
+    AVI_CAMERA_START_FRAME: int = 1 # Frame number to start playback from (0-based)
+
+    # Logging configuration
+    LOG_FILE_MAX_SIZE: int = 10 * 1024 * 1024  # 10MB
+    LOG_BACKUP_COUNT: int = 5
+    #LOG_CONSOLE_LEVEL: str = "DEBUG"  # Console log level
+    #LOG_FILE_LEVEL: str = "DEBUG"  # File log level
+#most common fast change for debug
+    #!!!!!!!!
+    PREFERRED_CAMERA_DEVICE: CameraType =CameraType.AVI_CAMERA   #CameraType.DO3THINK_CAMERA # # CameraType.OPENCV_CAMERA##
+    USE_AIR: bool = False  # True #
+    SAVE_FRAMES: bool = True  # False
+    LOG_LEVEL: str = "INFO"  # ,DEBUG , WARNING, ERROR
+    AVI_CAMERA_PATH: str = os.path.join(os.path.expanduser("./vid/"),
+                                        "13-29.avi")
+    AVI_CAMERA_FPS: int = 30

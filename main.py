@@ -1,4 +1,5 @@
 import time
+import os
 
 import cv2
 import serial
@@ -6,6 +7,7 @@ from PyQt6 import uic
 from PyQt6.QtCore import QObject, Qt, QThread, QTimer
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
+import utils
 
 from configs import MainConfigs
 from constants import Messages
@@ -30,14 +32,16 @@ class Worker(QObject):
 
     def send_impulse(self, duration: int):
         x = str(duration)
+        utils.logger.info("Sending impulse")
         self.arduino.write(x.encode("utf-8"))
+        #self.arduino.r
 
     def run(self):
         while True:
             if len(potato_defects_queue) > 0:
                 current_time = time.time()
                 if current_time - potato_timing_queue[0][0] >= self.switch[potato_timing_queue[0][1]]:
-                    self.send_impulse(2)
+                    self.send_impulse(200)
                     potato_timing_queue.pop(0)
                     potato_defects_queue.pop(0)
             time.sleep(1)
@@ -83,7 +87,7 @@ class MyApp(QMainWindow):
         if not self.camera_activated:
             if self.camera is None:
                 self.camera = CameraFactory.get_camera_device(
-                    MainConfigs.PREFERRED_CAMERA_DEVICE, "video/2025-01-09_15-19-24_639.avi"
+                    MainConfigs.PREFERRED_CAMERA_DEVICE
                 )
             if self.camera.device_is_activated():
                 self.camera_activated = True
@@ -117,7 +121,9 @@ class MyApp(QMainWindow):
     def update_frame(self):
         frame = self.camera.get_next_frame()
         if frame is not None:
+            #print(f"Frame shape: {frame.shape}")
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            #utils.save_frame(os.path.join(os.path.expanduser("~"), "framesraw"), frame)
             frame = self.tracker.update(frame, self.textBrowser)
             h, w, ch = frame.shape
             bytes_per_line = ch * w
@@ -137,10 +143,19 @@ class MyApp(QMainWindow):
                 self.null_counter_button.setEnabled(True)
             else:
                 self.null_counter_button.setEnabled(False)
+        else:
+            pass
+            #print("No frame received from camera")
 
     def closeEvent(self, event):
-        if self.camera_activated:
+        """Override closeEvent to log statistics before closing"""
+        utils.logger.info("Application is closing...")
+        self.tracker.log_final_statistics(self.counter)
+        if self.camera:
             self.camera.stop_stream()
+        if MainConfigs.USE_AIR and hasattr(self, 'serial_interface_thread'):
+            self.serial_interface_thread.quit()
+            self.serial_interface_thread.wait()
         event.accept()
 
 
