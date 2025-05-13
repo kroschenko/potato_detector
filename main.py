@@ -73,6 +73,11 @@ class MyApp(QMainWindow):
             self.serial_interface_thread.started.connect(self.worker.run)
             self.serial_interface_thread.start()
 
+        # Auto-start camera if configured
+        if MainConfigs.CAMERA_AUTOSTART:
+            utils.logger.info("Auto-starting camera as per configuration")
+            self.activate_camera()
+
     def calibrate(self):
         pass
 
@@ -85,7 +90,7 @@ class MyApp(QMainWindow):
         if not self.camera_activated:
             if self.camera is None:
                 self.camera = CameraFactory.get_camera_device(
-                    MainConfigs.PREFERRED_CAMERA_DEVICE, "video/13-33.avi"
+                    MainConfigs.PREFERRED_CAMERA_DEVICE#, "video/2025-01-09_15-27-09_973.avi"
                 )
             if self.camera.device_is_activated():
                 self.camera_activated = True

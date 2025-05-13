@@ -35,6 +35,25 @@ class PotatoTracker:
         logger.debug(f"Third section middle: {self.third_section_middle}")
         self.total_defects_detected = 0
 
+    def cleanup(self):
+        """Clean up resources and reset state"""
+        # Clear active objects
+        self.active_potato_objects.clear()
+        # Reset defect counter
+        self.total_defects_detected = 0
+        # Clear queues
+        self.potato_defects_queue.clear()
+        self.potato_timing_queue.clear()
+        # Reset tracker
+        self.tracker = Tracker(distance_function="euclidean", distance_threshold=150)
+        # Reinitialize YOLO models
+        self.potato_detector = YOLO(MainConfigs.POTATO_DETECTOR_PATH)
+        self.defects_detector = YOLO(MainConfigs.DEFECTS_DETECTOR_PATH)
+        # Force garbage collection
+        import gc
+        gc.collect()
+        logger.info("PotatoTracker resources cleaned up and models reinitialized")
+
     def get_total_objects_count(self):
         return self.tracker.total_object_count
 
