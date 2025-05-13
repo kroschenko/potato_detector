@@ -9,7 +9,7 @@ from main_types import CameraType
 class MainConfigs:
     DO3THINK_CAMERA_NAME: str = "DO3THINK-04B400000199-"
     OPENCV_CAMERA_DESC: Any = 0
-    POTATO_DETECTOR_PATH: str = "models/potato_detector.pt"
+    POTATO_DETECTOR_PATH: str = "models/potato_detector_alb.pt"
     DEFECTS_DETECTOR_PATH: str = "models/mechdamage_detector.pt"
     MAIN_FORM_NAME: str = "mainForm.ui"
     CAMERA_STATUS_STYLE_ON: str = """ 
@@ -24,7 +24,8 @@ class MainConfigs:
                     font-weight: bold; 
                 }
             """
-    POTATO_DETECTION_CONFIDENCE_THRESHOLD: float = 0.75
+    PREFERRED_CAMERA_DEVICE: CameraType = CameraType.OPENCV_CAMERA
+    POTATO_DETECTION_CONFIDENCE_THRESHOLD: float = 0.85
     DEFECTS_DETECTION_CONFIDENCE_THRESHOLD: float = 0.75
     SCANNING_WINDOW: int = 50
     FIRST_STAGE_MIDDLE_POINT: float = 0.165

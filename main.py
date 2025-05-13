@@ -1,5 +1,4 @@
 import time
-import os
 
 import cv2
 import serial
@@ -34,7 +33,6 @@ class Worker(QObject):
         x = str(duration)
         utils.logger.info("Sending impulse")
         self.arduino.write(x.encode("utf-8"))
-        #self.arduino.r
 
     def run(self):
         while True:
@@ -87,7 +85,7 @@ class MyApp(QMainWindow):
         if not self.camera_activated:
             if self.camera is None:
                 self.camera = CameraFactory.get_camera_device(
-                    MainConfigs.PREFERRED_CAMERA_DEVICE
+                    MainConfigs.PREFERRED_CAMERA_DEVICE, "video/2025-01-09_15-27-09_973.avi"
                 )
             if self.camera.device_is_activated():
                 self.camera_activated = True
@@ -121,9 +119,7 @@ class MyApp(QMainWindow):
     def update_frame(self):
         frame = self.camera.get_next_frame()
         if frame is not None:
-            #print(f"Frame shape: {frame.shape}")
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            #utils.save_frame(os.path.join(os.path.expanduser("~"), "framesraw"), frame)
             frame = self.tracker.update(frame, self.textBrowser)
             h, w, ch = frame.shape
             bytes_per_line = ch * w
@@ -145,7 +141,6 @@ class MyApp(QMainWindow):
                 self.null_counter_button.setEnabled(False)
         else:
             pass
-            #print("No frame received from camera")
 
     def closeEvent(self, event):
         """Override closeEvent to log statistics before closing"""
