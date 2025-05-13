@@ -18,7 +18,7 @@ class PotatoTracker:
     def __init__(self, frame_size, potato_defects_queue: List, potato_timing_queue: List):
         self.potato_detector = YOLO(MainConfigs.POTATO_DETECTOR_PATH)
         self.defects_detector = YOLO(MainConfigs.DEFECTS_DETECTOR_PATH)
-        self.tracker = Tracker(distance_function="euclidean", distance_threshold=100)
+        self.tracker = Tracker(distance_function="euclidean", distance_threshold=150)
         self.active_potato_objects = {}
         frame_width = frame_size[1]
         self.first_section_middle = int(MainConfigs.FIRST_STAGE_MIDDLE_POINT * frame_width)
