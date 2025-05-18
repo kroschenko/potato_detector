@@ -90,7 +90,7 @@ class MyApp(QMainWindow):
         if not self.camera_activated:
             if self.camera is None:
                 self.camera = CameraFactory.get_camera_device(
-                    MainConfigs.PREFERRED_CAMERA_DEVICE#, "video/2025-01-09_15-27-09_973.avi"
+                    MainConfigs.PREFERRED_CAMERA_DEVICE
                 )
             if self.camera.device_is_activated():
                 self.camera_activated = True
