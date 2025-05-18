@@ -116,7 +116,7 @@ class AVICamera(Camera):
             
         super().__init__(avi_path)
         logger.info("Initializing AVI camera")
-        logger.debug(f"Video path: {avi_path}")
+        logger.info(f"Video path: {avi_path}")
         logger.debug(f"Target FPS: {fps}")
         logger.debug(f"Loop enabled: {loop}")
         logger.debug(f"Start frame: {start_frame}")
@@ -131,12 +131,11 @@ class AVICamera(Camera):
             log_camera_info(self)
             
             # Set the starting frame if specified
-            if start_frame > 0:
-                success = self.device.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
-                if success:
-                    logger.info(f"Successfully set start frame to: {start_frame}")
-                else:
-                    logger.warning(f"Failed to set start frame to {start_frame}")
+            success = self.device.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+            if success:
+                logger.info(f"Successfully set start frame to: {start_frame}")
+            else:
+                logger.warning(f"Failed to set start frame to {start_frame}")
         
         self.fps = fps
         self.loop = loop
@@ -168,7 +167,7 @@ class AVICamera(Camera):
             if current_time - self.last_frame_time >= self.frame_delay:
                 ret, frame = self.device.read()
                 if not ret:
-                    logger.info(f"End of video reached at frame {self.current_frame}")
+                    logger.debug(f"End of video reached at frame {self.current_frame}")
                     if self.loop:
                         logger.info("Looping back to start of video")
                         self.device.set(cv2.CAP_PROP_POS_FRAMES, 0)

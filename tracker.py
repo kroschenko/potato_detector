@@ -1,23 +1,40 @@
 import time
-from collections import OrderedDict
+# from collections import OrderedDict
 from typing import List
 
 import cv2
 import numpy as np
+import torch
 from norfair import Detection, Tracker, draw_points
 from ultralytics import YOLO
+from torchvision import models as torch_models
+from torch import nn
 
 from configs import MainConfigs
 from constants import Color, Messages
 from potato_object import PotatoObject
 from utils import init_frames, save_frame
 from logger_config import logger
-#FrameSaver
+from torchvision import transforms
+from PIL import Image
+
+
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406],
+                         [0.229, 0.224, 0.225])
+])
+
 
 class PotatoTracker:
     def __init__(self, frame_size, potato_defects_queue: List, potato_timing_queue: List):
         self.potato_detector = YOLO(MainConfigs.POTATO_DETECTOR_PATH)
-        self.defects_detector = YOLO(MainConfigs.DEFECTS_DETECTOR_PATH)
+        self.defected_potato_classifier = torch_models.mobilenet_v2(pretrained=False)
+        self.defected_potato_classifier.classifier[1] = nn.Linear(self.defected_potato_classifier.last_channel, MainConfigs.NUM_CLASSES)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.defected_potato_classifier.load_state_dict(torch.load(MainConfigs.DEFECTS_CLASSIFIER_PATH, map_location=device))
+        self.defected_potato_classifier.eval()
         self.tracker = Tracker(distance_function="euclidean", distance_threshold=150)
         self.active_potato_objects = {}
         frame_width = frame_size[1]
@@ -34,6 +51,25 @@ class PotatoTracker:
         logger.debug(f"Second section middle: {self.second_section_middle}")
         logger.debug(f"Third section middle: {self.third_section_middle}")
         self.total_defects_detected = 0
+
+    def cleanup(self):
+        """Clean up resources and reset state"""
+        # Clear active objects
+        self.active_potato_objects.clear()
+        # Reset defect counter
+        self.total_defects_detected = 0
+        # Clear queues
+        self.potato_defects_queue.clear()
+        self.potato_timing_queue.clear()
+        # Reset tracker
+        self.tracker = Tracker(distance_function="euclidean", distance_threshold=150)
+        # Reinitialize YOLO models
+        self.potato_detector = YOLO(MainConfigs.POTATO_DETECTOR_PATH)
+        self.defects_detector = YOLO(MainConfigs.DEFECTS_DETECTOR_PATH)
+        # Force garbage collection
+        import gc
+        gc.collect()
+        logger.info("PotatoTracker resources cleaned up and models reinitialized")
 
     def get_total_objects_count(self):
         return self.tracker.total_object_count
@@ -139,15 +175,17 @@ class PotatoTracker:
                     x0, y0, x1, y1 = potato_obj.bounds
                     sub_img = frame[int(y0) : int(y1), int(x0) : int(x1)]
                     logger.debug(f"Scanning potato {_id} for defects in stage {stage + 1}")
-                    res = self.defects_detector(sub_img, verbose=False)
-                    for damage_box in res[0].boxes.data:
-                        if damage_box[-2] > MainConfigs.DEFECTS_DETECTION_CONFIDENCE_THRESHOLD:
-                            self.potato_defects_queue.append(_id)
-                            self.potato_timing_queue.append((time.time(), stage))
-                            text_browser.append(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
-                            logger.info(f"Defect detected in potato {_id} at stage {stage + 1}")
-                            self.total_defects_detected += 1
-                            break
+                    sub_img = Image.fromarray(sub_img).convert("RGB")
+                    sub_img = transform(sub_img).unsqueeze(0)
+                    with torch.no_grad():
+                        outputs = self.defected_potato_classifier(sub_img)
+                        pred_class = outputs.argmax(dim=1).item()
+                    if pred_class == 0:
+                        self.potato_defects_queue.append(_id)
+                        self.potato_timing_queue.append((time.time(), stage))
+                        text_browser.append(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
+                        logger.info(f"Defect detected in potato {_id} at stage {stage + 1}")
+                        self.total_defects_detected += 1
                     potato_obj.__setattr__(stage_switch[stage][2], True)
                     text_browser.append(f"{_id} {stage_switch[stage][1]}")
                     logger.debug(f"Potato {_id} completed stage {stage + 1} scanning")
