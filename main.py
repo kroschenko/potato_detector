@@ -1,9 +1,8 @@
 import time
 
 import cv2
-import serial
 from PyQt6 import uic
-from PyQt6.QtCore import QObject, Qt, QThread, QTimer
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
 import utils
@@ -12,37 +11,22 @@ from configs import MainConfigs
 from constants import Messages
 from factories import CameraFactory
 from tracker import PotatoTracker
+from multiprocessing import Process, Queue
+from logger_config import logger
+from control_from_another_prog.simple_impulse import send_impulse_raspberry
 
+global send_proc
 potato_defects_queue = []
-potato_timing_queue = []
+potato_timing_queue = Queue()
 
 
-class Worker(QObject):
-
-    switch = {
-        0: MainConfigs.FIRST_STAGE_TIME_DELAY,
-        1: MainConfigs.SECOND_STAGE_TIME_DELAY,
-        2: MainConfigs.THIRD_STAGE_TIME_DELAY,
-    }
-
-    def __init__(self):
-        super().__init__()
-        self.arduino = serial.Serial(MainConfigs.ARDUINO_PATH, 9600)
-
-    def send_impulse(self, duration: int):
-        x = str(duration)
-        utils.logger.info("Sending impulse")
-        self.arduino.write(x.encode("utf-8"))
-
-    def run(self):
-        while True:
-            if len(potato_defects_queue) > 0:
-                current_time = time.time()
-                if current_time - potato_timing_queue[0][0] >= self.switch[potato_timing_queue[0][1]]:
-                    self.send_impulse(200)
-                    potato_timing_queue.pop(0)
-                    potato_defects_queue.pop(0)
-            time.sleep(1)
+def impulse_sender(input_queue: Queue):
+    while True:
+        sample = input_queue.get()
+        while time.time() - sample <= MainConfigs.NOZZLE_ACTIVATION_DELAY:
+            pass
+        # send_impulse_raspberry()
+        logger.info(f"Send impulse to raspberry board")
 
 
 class MyApp(QMainWindow):
@@ -66,12 +50,6 @@ class MyApp(QMainWindow):
         self.cam_off_button.clicked.connect(self.deactivate_camera)
         self.null_counter_button.clicked.connect(self.null_objects_count)
         self.calibrate_button.clicked.connect(self.calibrate)
-        if MainConfigs.USE_AIR:
-            self.serial_interface_thread = QThread()
-            self.worker = Worker()
-            self.worker.moveToThread(self.serial_interface_thread)
-            self.serial_interface_thread.started.connect(self.worker.run)
-            self.serial_interface_thread.start()
 
         # Auto-start camera if configured
         if MainConfigs.CAMERA_AUTOSTART:
@@ -90,7 +68,7 @@ class MyApp(QMainWindow):
         if not self.camera_activated:
             if self.camera is None:
                 self.camera = CameraFactory.get_camera_device(
-                    MainConfigs.PREFERRED_CAMERA_DEVICE
+                    MainConfigs.PREFERRED_CAMERA_DEVICE, "video/14-57.avi"
                 )
             if self.camera.device_is_activated():
                 self.camera_activated = True
@@ -157,9 +135,15 @@ class MyApp(QMainWindow):
             self.serial_interface_thread.quit()
             self.serial_interface_thread.wait()
         event.accept()
+        if send_proc:
+            send_proc.terminate()
 
 
-app = QApplication([])
-window = MyApp()
-window.show()
-app.exec()
+if __name__ == '__main__':
+    if MainConfigs.USE_AIR:
+        send_proc = Process(target=impulse_sender, args=(potato_timing_queue,), daemon=True)
+        send_proc.start()
+    app = QApplication([])
+    window = MyApp()
+    window.show()
+    app.exec()

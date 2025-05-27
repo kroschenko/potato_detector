@@ -1,5 +1,4 @@
 import time
-# from collections import OrderedDict
 from typing import List
 
 import cv2
@@ -17,6 +16,7 @@ from utils import init_frames, save_frame
 from logger_config import logger
 from torchvision import transforms
 from PIL import Image
+from multiprocessing import Queue
 
 
 transform = transforms.Compose([
@@ -28,7 +28,7 @@ transform = transforms.Compose([
 
 
 class PotatoTracker:
-    def __init__(self, frame_size, potato_defects_queue: List, potato_timing_queue: List):
+    def __init__(self, frame_size, potato_defects_queue: List, potato_timing_queue: Queue):
         self.potato_detector = YOLO(MainConfigs.POTATO_DETECTOR_PATH)
         self.defected_potato_classifier = torch_models.mobilenet_v2(pretrained=False)
         self.defected_potato_classifier.classifier[1] = nn.Linear(self.defected_potato_classifier.last_channel, MainConfigs.NUM_CLASSES)
@@ -60,7 +60,8 @@ class PotatoTracker:
         self.total_defects_detected = 0
         # Clear queues
         self.potato_defects_queue.clear()
-        self.potato_timing_queue.clear()
+        # self.potato_timing_queue.clear()
+        self.potato_timing_queue.close()
         # Reset tracker
         self.tracker = Tracker(distance_function="euclidean", distance_threshold=150)
         # Reinitialize YOLO models
@@ -156,11 +157,13 @@ class PotatoTracker:
                         not potato_obj.__getattribute__(stage_switch[stage][0])
                         and abs(potato_obj.center[0] - self.__getattribute__(stage_switch[stage][1]))
                         < MainConfigs.SCANNING_WINDOW
-                        and _id not in self.potato_defects_queue
                     ):
-                        stage_switch[stage][2].append(_id)
-                        text_browser.append(f"{_id} {stage_switch[stage][3]}")
-                        logger.debug(f"Potato {_id} entered stage {stage + 1}")
+                        if _id not in self.potato_defects_queue:
+                            stage_switch[stage][2].append(_id)
+                            text_browser.append(f"{_id} {stage_switch[stage][3]}")
+                            logger.debug(f"Potato {_id} entered stage {stage + 1}")
+                        else:
+                            potato_obj.__setattr__(stage_switch[stage][0], True)
                         break
 
             stage_switch = {
@@ -173,7 +176,7 @@ class PotatoTracker:
                 for _id in stage_switch[stage][0]:
                     potato_obj = self.active_potato_objects[_id]
                     x0, y0, x1, y1 = potato_obj.bounds
-                    sub_img = frame[int(y0) : int(y1), int(x0) : int(x1)]
+                    sub_img = frame[int(y0):int(y1), int(x0):int(x1)]
                     logger.debug(f"Scanning potato {_id} for defects in stage {stage + 1}")
                     sub_img = Image.fromarray(sub_img).convert("RGB")
                     sub_img = transform(sub_img).unsqueeze(0)
@@ -182,13 +185,20 @@ class PotatoTracker:
                         pred_class = outputs.argmax(dim=1).item()
                     if pred_class == 0:
                         self.potato_defects_queue.append(_id)
-                        self.potato_timing_queue.append((time.time(), stage))
                         text_browser.append(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
                         logger.info(f"Defect detected in potato {_id} at stage {stage + 1}")
                         self.total_defects_detected += 1
                     potato_obj.__setattr__(stage_switch[stage][2], True)
                     text_browser.append(f"{_id} {stage_switch[stage][1]}")
                     logger.debug(f"Potato {_id} completed stage {stage + 1} scanning")
+
+            for _id, potato_obj in self.active_potato_objects.items():
+                if (
+                        potato_obj.__getattribute__(stage_switch[2][2]) and
+                        _id in self.potato_defects_queue
+                ):
+                    self.potato_timing_queue.put(time.time())
+                    self.potato_defects_queue.remove(_id)
 
             draw_points(frame, tracked_objects, text_size=8, text_color=Color.RED, color=Color.RED)
         return frame
