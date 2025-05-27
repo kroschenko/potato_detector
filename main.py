@@ -23,8 +23,7 @@ potato_timing_queue = Queue()
 def impulse_sender(input_queue: Queue):
     while True:
         sample = input_queue.get()
-        while time.time() - sample <= MainConfigs.NOZZLE_ACTIVATION_DELAY:
-            pass
+        time.sleep(MainConfigs.NOZZLE_ACTIVATION_DELAY - (time.time() - sample))
         # send_impulse_raspberry()
         logger.info(f"Send impulse to raspberry board")
 

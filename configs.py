@@ -33,7 +33,7 @@ class MainConfigs:
     SECOND_STAGE_MIDDLE_POINT: float = 0.495
     THIRD_STAGE_MIDDLE_POINT: float = 0.825
     CAMERA_FRAME_SHAPE: Tuple = (1080, 1920, 3)
-    NOZZLE_ACTIVATION_DELAY = 1
+    NOZZLE_ACTIVATION_DELAY = 5
     SAVE_PATH: str = os.path.join(os.path.expanduser("~"), "frames")
     # AVI file camera emulation settings
     # not used USE_AVI_CAMERA: bool = False
