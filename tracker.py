@@ -46,6 +46,8 @@ class PotatoTracker:
         if MainConfigs.SAVE_FRAMES:
             self.frame_path  = init_frames()
         logger.info("-------------------PotatoTracker initialized")
+        logger.info(f"{device} , {MainConfigs.POTATO_DETECTOR_PATH},"
+                    f"{MainConfigs.DEFECTS_CLASSIFIER_PATH}, {MainConfigs.DEFECTS_DETECTOR_PATH}")
         logger.debug(f"Frame size: {frame_size}")
         logger.debug(f"First section middle: {self.first_section_middle}")
         logger.debug(f"Second section middle: {self.second_section_middle}")
