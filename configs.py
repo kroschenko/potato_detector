@@ -33,21 +33,26 @@ class MainConfigs:
     SECOND_STAGE_MIDDLE_POINT: float = 0.495
     THIRD_STAGE_MIDDLE_POINT: float = 0.825
     CAMERA_FRAME_SHAPE: Tuple = (1080, 1920, 3)
-    NOZZLE_ACTIVATION_DELAY = 5
+
     SAVE_PATH: str = os.path.join(os.path.expanduser("~"), "frames")
     # AVI file camera emulation settings
     # not used USE_AVI_CAMERA: bool = False
-    AVI_CAMERA_START_FRAME: int = 0 # Frame number to start playback from (0-based)
+     # Frame number to start playback from (0-based)
     # Logging configuration
+    AVI_CAMERA_FPS: int = 130
     LOG_FILE_MAX_SIZE: int = 1 * 1024 * 1024  # 10MB
     LOG_BACKUP_COUNT: int = 5
-    PREFERRED_CAMERA_DEVICE: CameraType = CameraType.AVI_CAMERA   #CameraType.DO3THINK_CAMERA # # CameraType.OPENCV_CAMERA##
     AVI_CAMERA_LOOP: bool = False
-    USE_AIR: bool = True
+
     SAVE_FRAMES: bool = False
     LOG_LEVEL: str = "INFO"  # ,DEBUG , WARNING, ERROR
+
     AVI_CAMERA_PATH: str = os.path.join(os.path.expanduser("./video/"),
-                                        "14-31.avi"
+                                        "15-07.avi"  #AVI_CAMERA_START_FRAME: int = 320
+                                        #"14-31.avi"
                                         )#"16-51 09-38.avi")
-    AVI_CAMERA_FPS: int = 130
+    PREFERRED_CAMERA_DEVICE: CameraType = CameraType.AVI_CAMERA  # CameraType.DO3THINK_CAMERA # # CameraType.OPENCV_CAMERA##
     CAMERA_AUTOSTART: bool = True  #False Whether to start camera automatically when application starts
+    AVI_CAMERA_START_FRAME: int = 320
+    USE_AIR: bool = True
+    NOZZLE_ACTIVATION_DELAY = 1

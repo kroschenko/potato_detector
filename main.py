@@ -24,9 +24,12 @@ def impulse_sender(input_queue: Queue):
     while True:
         sample = input_queue.get()
         time.sleep(MainConfigs.NOZZLE_ACTIVATION_DELAY - (time.time() - sample))
-        # send_impulse_raspberry()
-        logger.info(f"Send impulse to raspberry board")
 
+        logger.info(f"Send impulse to raspberry board")
+        #length - msek
+        logger.info(
+            send_impulse_raspberry(100)
+        )
 
 class MyApp(QMainWindow):
     def __init__(self):
@@ -67,7 +70,7 @@ class MyApp(QMainWindow):
         if not self.camera_activated:
             if self.camera is None:
                 self.camera = CameraFactory.get_camera_device(
-                    MainConfigs.PREFERRED_CAMERA_DEVICE, "video/14-57.avi"
+                    MainConfigs.PREFERRED_CAMERA_DEVICE#, "video/14-57.avi"
                 )
             if self.camera.device_is_activated():
                 self.camera_activated = True

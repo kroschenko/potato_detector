@@ -4,7 +4,6 @@ RASPBERRY_SERVER_URL = "http://192.168.0.108:8000"  # Change this to your server
 
 # Nozzle configuration
 NOZZLE_ID = "nozzle1"
-IMPULSE_LENGTH_MS = 10  # Impulse duration in milliseconds
 
 # API endpoints
 RELAY_ENDPOINT = f"{RASPBERRY_SERVER_URL}/api/v2/relays"

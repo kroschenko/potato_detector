@@ -1,9 +1,9 @@
 import requests
 import time
-from .config import NOZZLE_ENDPOINT, IMPULSE_LENGTH_MS
+from .config import NOZZLE_ENDPOINT
 
 
-def send_impulse_raspberry():
+def send_impulse_raspberry(length):
     """Send a single impulse to the Raspberry Pi controlled nozzle"""
     try:
         # Turn ON
@@ -14,7 +14,7 @@ def send_impulse_raspberry():
         response.raise_for_status()
         
         # Wait for impulse duration
-        time.sleep(IMPULSE_LENGTH_MS / 1000)  # Convert ms to seconds
+        time.sleep(length / 1000)  # Convert ms to seconds
         
         # Turn OFF
         response = requests.post(
@@ -23,10 +23,10 @@ def send_impulse_raspberry():
         )
         response.raise_for_status()
         
-        print("Impulse executed successfully")
+        return ("Impulse executed successfully")
         
     except requests.exceptions.RequestException as e:
-        print(f"Error sending impulse: {e}")
+        return (f"Error sending impulse: {e}")
 
 
 if __name__ == "__main__":
