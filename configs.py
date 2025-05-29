@@ -51,8 +51,8 @@ class MainConfigs:
                                         "15-07.avi"  #AVI_CAMERA_START_FRAME: int = 320
                                         #"14-31.avi"
                                         )#"16-51 09-38.avi")
-    PREFERRED_CAMERA_DEVICE: CameraType = CameraType.AVI_CAMERA  # CameraType.DO3THINK_CAMERA # # CameraType.OPENCV_CAMERA##
+    PREFERRED_CAMERA_DEVICE: CameraType =  CameraType.AVI_CAMERA #CameraType.DO3THINK_CAMERA #  # # CameraType.OPENCV_CAMERA##
     CAMERA_AUTOSTART: bool = True  #False Whether to start camera automatically when application starts
     AVI_CAMERA_START_FRAME: int = 320
     USE_AIR: bool = True
-    NOZZLE_ACTIVATION_DELAY = 1
+    NOZZLE_ACTIVATION_DELAY = 6 #2000 rpm motor
