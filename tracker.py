@@ -7,7 +7,6 @@ import torch
 from norfair import Detection, Tracker, draw_points
 from ultralytics import YOLO
 from torchvision import models as torch_models
-from torch import nn
 
 from configs import MainConfigs
 from constants import Color, Messages
@@ -19,37 +18,42 @@ from PIL import Image
 from multiprocessing import Queue
 
 
-transform = transforms.Compose([
+data_transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406],
-                         [0.229, 0.224, 0.225])
+    transforms.Normalize([0.41397374868392944, 0.3365930914878845, 0.21628183126449585],
+                         [0.34413665533065796, 0.3271228075027466, 0.29380717873573303]),
 ])
 
 
 class PotatoTracker:
     def __init__(self, frame_size, potato_defects_queue: List, potato_timing_queue: Queue):
         self.potato_detector = YOLO(MainConfigs.POTATO_DETECTOR_PATH)
-        self.defected_potato_classifier = torch_models.mobilenet_v2(pretrained=False)
-        self.defected_potato_classifier.classifier[1] = nn.Linear(self.defected_potato_classifier.last_channel, MainConfigs.NUM_CLASSES)
+        self.defected_potato_classifier = torch_models.mobilenet_v3_small(pretrained=False)
+        self.defected_potato_classifier.classifier[3] = torch.nn.Linear(self.defected_potato_classifier.classifier[3].in_features, MainConfigs.NUM_CLASSES)
+        # self.defected_potato_classifier = torch_models.mobilenet_v2(pretrained=False)
+        # self.defected_potato_classifier.classifier[1] = torch.nn.Linear(self.defected_potato_classifier.last_channel,
+        #                                                           MainConfigs.NUM_CLASSES)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.defected_potato_classifier.load_state_dict(torch.load(MainConfigs.DEFECTS_CLASSIFIER_PATH, map_location=device))
         self.defected_potato_classifier.eval()
         self.tracker = Tracker(distance_function="euclidean", distance_threshold=150)
         self.active_potato_objects = {}
         frame_width = frame_size[1]
-        self.first_section_middle = int(MainConfigs.FIRST_STAGE_MIDDLE_POINT * frame_width)
-        self.second_section_middle = int(MainConfigs.SECOND_STAGE_MIDDLE_POINT * frame_width)
-        self.third_section_middle = int(MainConfigs.THIRD_STAGE_MIDDLE_POINT * frame_width)
-        self.potato_defects_queue = potato_defects_queue
+        self.section_0_middle = int(MainConfigs.STAGE_POINT_0 * frame_width)
+        self.section_1_middle = int(MainConfigs.STAGE_POINT_1 * frame_width)
+        self.section_2_middle = int(MainConfigs.STAGE_POINT_2 * frame_width)
+        self.section_3_middle = int(MainConfigs.STAGE_POINT_3 * frame_width)
+        self.section_4_middle = int(MainConfigs.STAGE_POINT_4 * frame_width)
+        self.section_5_middle = int(MainConfigs.STAGE_POINT_5 * frame_width)
+        self.section_6_middle = int(MainConfigs.STAGE_POINT_6 * frame_width)
+        self.section_7_middle = int(MainConfigs.STAGE_POINT_7 * frame_width)
+        self.section_8_middle = int(MainConfigs.STAGE_POINT_8 * frame_width)
         self.potato_timing_queue = potato_timing_queue
         if MainConfigs.SAVE_FRAMES:
             self.frame_path  = init_frames()
         logger.info("-------------------PotatoTracker initialized")
         logger.debug(f"Frame size: {frame_size}")
-        logger.debug(f"First section middle: {self.first_section_middle}")
-        logger.debug(f"Second section middle: {self.second_section_middle}")
-        logger.debug(f"Third section middle: {self.third_section_middle}")
         self.total_defects_detected = 0
 
     def cleanup(self):
@@ -59,14 +63,11 @@ class PotatoTracker:
         # Reset defect counter
         self.total_defects_detected = 0
         # Clear queues
-        self.potato_defects_queue.clear()
-        # self.potato_timing_queue.clear()
         self.potato_timing_queue.close()
         # Reset tracker
         self.tracker = Tracker(distance_function="euclidean", distance_threshold=150)
         # Reinitialize YOLO models
         self.potato_detector = YOLO(MainConfigs.POTATO_DETECTOR_PATH)
-        self.defects_detector = YOLO(MainConfigs.DEFECTS_DETECTOR_PATH)
         # Force garbage collection
         import gc
         gc.collect()
@@ -86,7 +87,7 @@ class PotatoTracker:
     def update(self, frame, text_browser):
         if frame is not None:
             if MainConfigs.SAVE_FRAMES:
-                save_frame(self.frame_path,frame)
+                save_frame(self.frame_path, frame)
             logger.debug("Starting object detection")
             results = self.potato_detector(frame, verbose=False)
             detections = []
@@ -128,77 +129,105 @@ class PotatoTracker:
                     tmp_active[_id].center = centers[det_index]
             self.active_potato_objects = tmp_active
 
-            first_stage_scanning_objects, second_stage_scanning_objects, third_stage_scanning_objects = [], [], []
+            stage_0_scanning_objects, stage_1_scanning_objects, stage_2_scanning_objects = [], [], []
+            stage_3_scanning_objects, stage_4_scanning_objects, stage_5_scanning_objects = [], [], []
+            stage_6_scanning_objects, stage_7_scanning_objects, stage_8_scanning_objects = [], [], []
 
             stage_switch = {
                 0: [
-                    "first_section_scanned",
-                    "first_section_middle",
-                    first_stage_scanning_objects,
-                    Messages.FIRST_STAGE_ADDED,
+                    "section_0_scanned",
+                    "section_0_middle",
+                    stage_0_scanning_objects,
                 ],
                 1: [
-                    "second_section_scanned",
-                    "second_section_middle",
-                    second_stage_scanning_objects,
-                    Messages.SECOND_STAGE_ADDED,
+                    "section_1_scanned",
+                    "section_1_middle",
+                    stage_1_scanning_objects,
                 ],
                 2: [
-                    "third_section_scanned",
-                    "third_section_middle",
-                    third_stage_scanning_objects,
-                    Messages.THIRD_STAGE_ADDED,
+                    "section_2_scanned",
+                    "section_2_middle",
+                    stage_2_scanning_objects,
+                ],
+                3: [
+                    "section_3_scanned",
+                    "section_3_middle",
+                    stage_3_scanning_objects,
+                ],
+                4: [
+                    "section_4_scanned",
+                    "section_4_middle",
+                    stage_4_scanning_objects,
+                ],
+                5: [
+                    "section_5_scanned",
+                    "section_5_middle",
+                    stage_5_scanning_objects,
+                ],
+                6: [
+                    "section_6_scanned",
+                    "section_6_middle",
+                    stage_6_scanning_objects,
+                ],
+                7: [
+                    "section_7_scanned",
+                    "section_7_middle",
+                    stage_7_scanning_objects,
+                ],
+                8: [
+                    "section_8_scanned",
+                    "section_8_middle",
+                    stage_8_scanning_objects,
                 ],
             }
 
             for _id, potato_obj in self.active_potato_objects.items():
-                for stage in range(0, 3):
+                for stage in range(0, 9):
                     if (
                         not potato_obj.__getattribute__(stage_switch[stage][0])
                         and abs(potato_obj.center[0] - self.__getattribute__(stage_switch[stage][1]))
                         < MainConfigs.SCANNING_WINDOW
                     ):
-                        if _id not in self.potato_defects_queue:
-                            stage_switch[stage][2].append(_id)
-                            text_browser.append(f"{_id} {stage_switch[stage][3]}")
-                            logger.debug(f"Potato {_id} entered stage {stage + 1}")
-                        else:
-                            potato_obj.__setattr__(stage_switch[stage][0], True)
-                        break
+                        stage_switch[stage][2].append(_id)
+                        logger.debug(f"Potato {_id} entered stage {stage + 1}")
 
             stage_switch = {
-                0: [first_stage_scanning_objects, Messages.FIRST_STAGE_SCANNED, "first_section_scanned"],
-                1: [second_stage_scanning_objects, Messages.SECOND_STAGE_SCANNED, "second_section_scanned"],
-                2: [third_stage_scanning_objects, Messages.THIRD_STAGE_SCANNED, "third_section_scanned"],
+                0: [stage_0_scanning_objects, "section_0_scanned"],
+                1: [stage_1_scanning_objects, "section_1_scanned"],
+                2: [stage_2_scanning_objects, "section_2_scanned"],
+                3: [stage_3_scanning_objects, "section_3_scanned"],
+                4: [stage_4_scanning_objects, "section_4_scanned"],
+                5: [stage_5_scanning_objects, "section_5_scanned"],
+                6: [stage_6_scanning_objects, "section_6_scanned"],
+                7: [stage_7_scanning_objects, "section_7_scanned"],
+                8: [stage_8_scanning_objects, "section_8_scanned"],
             }
 
-            for stage in range(0, 3):
+            for stage in range(0, 9):
                 for _id in stage_switch[stage][0]:
                     potato_obj = self.active_potato_objects[_id]
                     x0, y0, x1, y1 = potato_obj.bounds
                     sub_img = frame[int(y0):int(y1), int(x0):int(x1)]
                     logger.debug(f"Scanning potato {_id} for defects in stage {stage + 1}")
                     sub_img = Image.fromarray(sub_img).convert("RGB")
-                    sub_img = transform(sub_img).unsqueeze(0)
+                    sub_img = data_transform(sub_img).unsqueeze(0)
                     with torch.no_grad():
                         outputs = self.defected_potato_classifier(sub_img)
-                        pred_class = outputs.argmax(dim=1).item()
-                    if pred_class == 0:
-                        self.potato_defects_queue.append(_id)
-                        text_browser.append(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
-                        logger.info(f"Defect detected in potato {_id} at stage {stage + 1}")
-                        self.total_defects_detected += 1
-                    potato_obj.__setattr__(stage_switch[stage][2], True)
-                    text_browser.append(f"{_id} {stage_switch[stage][1]}")
+                        potato_obj.evaluation_results += outputs
+                    potato_obj.__setattr__(stage_switch[stage][1], True)
                     logger.debug(f"Potato {_id} completed stage {stage + 1} scanning")
 
             for _id, potato_obj in self.active_potato_objects.items():
                 if (
-                        potato_obj.__getattribute__(stage_switch[2][2]) and
-                        _id in self.potato_defects_queue
+                        potato_obj.__getattribute__(stage_switch[8][1]) and
+                        not potato_obj.final_evaluation_complete
                 ):
-                    self.potato_timing_queue.put(time.time())
-                    self.potato_defects_queue.remove(_id)
+                    eval_res = potato_obj.evaluation_results
+                    pred_class = eval_res.argmax(dim=1).item()
+                    if pred_class == 0: #and abs(eval_res[0][1]-eval_res[0][0]) > 15:
+                        text_browser.append(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
+                        self.potato_timing_queue.put(time.time())
+                    potato_obj.final_evaluation_complete = True
 
             draw_points(frame, tracked_objects, text_size=8, text_color=Color.RED, color=Color.RED)
         return frame

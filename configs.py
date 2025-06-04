@@ -10,8 +10,7 @@ class MainConfigs:
     DO3THINK_CAMERA_NAME: str = "DO3THINK-04B400000199-"
     OPENCV_CAMERA_DESC: Any = 0
     POTATO_DETECTOR_PATH: str = "models/potato_det.pt"
-    DEFECTS_CLASSIFIER_PATH: str = "models/defects_classifier.pth"
-    DEFECTS_DETECTOR_PATH: str = "models/mechdamage_detector.pt"
+    DEFECTS_CLASSIFIER_PATH: str = "models/defects_classifier_v3.pth"
     MAIN_FORM_NAME: str = "mainForm.ui"
     CAMERA_STATUS_STYLE_ON: str = """ 
                 QLabel { 
@@ -29,9 +28,15 @@ class MainConfigs:
     POTATO_DETECTION_CONFIDENCE_THRESHOLD: float = 0.85
     DEFECTS_DETECTION_CONFIDENCE_THRESHOLD: float = 0.75
     SCANNING_WINDOW: int = 50
-    FIRST_STAGE_MIDDLE_POINT: float = 0.165
-    SECOND_STAGE_MIDDLE_POINT: float = 0.495
-    THIRD_STAGE_MIDDLE_POINT: float = 0.825
+    STAGE_POINT_0: float = 0.1
+    STAGE_POINT_1: float = 0.2
+    STAGE_POINT_2: float = 0.3
+    STAGE_POINT_3: float = 0.4
+    STAGE_POINT_4: float = 0.5
+    STAGE_POINT_5: float = 0.6
+    STAGE_POINT_6: float = 0.7
+    STAGE_POINT_7: float = 0.8
+    STAGE_POINT_8: float = 0.9
     CAMERA_FRAME_SHAPE: Tuple = (1080, 1920, 3)
     NOZZLE_ACTIVATION_DELAY = 5
     SAVE_PATH: str = os.path.join(os.path.expanduser("~"), "frames")
