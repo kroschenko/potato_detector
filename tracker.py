@@ -1,5 +1,4 @@
 import time
-from typing import List
 
 import cv2
 import numpy as np
@@ -27,31 +26,24 @@ data_transform = transforms.Compose([
 
 
 class PotatoTracker:
-    def __init__(self, frame_size, potato_defects_queue: List, potato_timing_queue: Queue):
+    def __init__(self, frame_size, count_of_scanning_zones: int, potato_timing_queue: Queue):
         self.potato_detector = YOLO(MainConfigs.POTATO_DETECTOR_PATH)
         self.defected_potato_classifier = torch_models.mobilenet_v3_small(pretrained=False)
         self.defected_potato_classifier.classifier[3] = torch.nn.Linear(self.defected_potato_classifier.classifier[3].in_features, MainConfigs.NUM_CLASSES)
         # self.defected_potato_classifier = torch_models.mobilenet_v2(pretrained=False)
         # self.defected_potato_classifier.classifier[1] = torch.nn.Linear(self.defected_potato_classifier.last_channel,
         #                                                           MainConfigs.NUM_CLASSES)
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cuda" if torch.cuda.is_available() else MainConfigs.DEFAULT_DEVICE)
+        self.potato_detector.to(device)
         self.defected_potato_classifier.load_state_dict(torch.load(MainConfigs.DEFECTS_CLASSIFIER_PATH, map_location=device))
         self.defected_potato_classifier.eval()
         self.tracker = Tracker(distance_function="euclidean", distance_threshold=150)
         self.active_potato_objects = {}
-        frame_width = frame_size[1]
-        self.section_0_middle = int(MainConfigs.STAGE_POINT_0 * frame_width)
-        self.section_1_middle = int(MainConfigs.STAGE_POINT_1 * frame_width)
-        self.section_2_middle = int(MainConfigs.STAGE_POINT_2 * frame_width)
-        self.section_3_middle = int(MainConfigs.STAGE_POINT_3 * frame_width)
-        self.section_4_middle = int(MainConfigs.STAGE_POINT_4 * frame_width)
-        self.section_5_middle = int(MainConfigs.STAGE_POINT_5 * frame_width)
-        self.section_6_middle = int(MainConfigs.STAGE_POINT_6 * frame_width)
-        self.section_7_middle = int(MainConfigs.STAGE_POINT_7 * frame_width)
-        self.section_8_middle = int(MainConfigs.STAGE_POINT_8 * frame_width)
+        self.count_of_scanning_zones = count_of_scanning_zones
+        self.delta = frame_size[1] / float(count_of_scanning_zones + 1)
         self.potato_timing_queue = potato_timing_queue
         if MainConfigs.SAVE_FRAMES:
-            self.frame_path  = init_frames()
+            self.frame_path = init_frames()
         logger.info("-------------------PotatoTracker initialized")
         logger.debug(f"Frame size: {frame_size}")
         self.total_defects_detected = 0
@@ -90,9 +82,7 @@ class PotatoTracker:
                 save_frame(self.frame_path, frame)
             logger.debug("Starting object detection")
             results = self.potato_detector(frame, verbose=False)
-            detections = []
-            centers = []
-            bounds = []
+            detections, centers, bounds = [], [], []
             detected_count = 0
             for result in results:
                 for box in result.boxes:
@@ -129,101 +119,38 @@ class PotatoTracker:
                     tmp_active[_id].center = centers[det_index]
             self.active_potato_objects = tmp_active
 
-            stage_0_scanning_objects, stage_1_scanning_objects, stage_2_scanning_objects = [], [], []
-            stage_3_scanning_objects, stage_4_scanning_objects, stage_5_scanning_objects = [], [], []
-            stage_6_scanning_objects, stage_7_scanning_objects, stage_8_scanning_objects = [], [], []
-
-            stage_switch = {
-                0: [
-                    "section_0_scanned",
-                    "section_0_middle",
-                    stage_0_scanning_objects,
-                ],
-                1: [
-                    "section_1_scanned",
-                    "section_1_middle",
-                    stage_1_scanning_objects,
-                ],
-                2: [
-                    "section_2_scanned",
-                    "section_2_middle",
-                    stage_2_scanning_objects,
-                ],
-                3: [
-                    "section_3_scanned",
-                    "section_3_middle",
-                    stage_3_scanning_objects,
-                ],
-                4: [
-                    "section_4_scanned",
-                    "section_4_middle",
-                    stage_4_scanning_objects,
-                ],
-                5: [
-                    "section_5_scanned",
-                    "section_5_middle",
-                    stage_5_scanning_objects,
-                ],
-                6: [
-                    "section_6_scanned",
-                    "section_6_middle",
-                    stage_6_scanning_objects,
-                ],
-                7: [
-                    "section_7_scanned",
-                    "section_7_middle",
-                    stage_7_scanning_objects,
-                ],
-                8: [
-                    "section_8_scanned",
-                    "section_8_middle",
-                    stage_8_scanning_objects,
-                ],
-            }
+            scanning_objects = [[] for _ in range(self.count_of_scanning_zones)]
 
             for _id, potato_obj in self.active_potato_objects.items():
-                for stage in range(0, 9):
+                for stage in range(0, self.count_of_scanning_zones):
                     if (
-                        not potato_obj.__getattribute__(stage_switch[stage][0])
-                        and abs(potato_obj.center[0] - self.__getattribute__(stage_switch[stage][1]))
-                        < MainConfigs.SCANNING_WINDOW
+                        stage not in potato_obj.sections_scanned
+                        and abs(potato_obj.center[0] - (stage + 1) * self.delta) < MainConfigs.SCANNING_WINDOW
                     ):
-                        stage_switch[stage][2].append(_id)
+                        scanning_objects[stage].append(_id)
                         logger.debug(f"Potato {_id} entered stage {stage + 1}")
 
-            stage_switch = {
-                0: [stage_0_scanning_objects, "section_0_scanned"],
-                1: [stage_1_scanning_objects, "section_1_scanned"],
-                2: [stage_2_scanning_objects, "section_2_scanned"],
-                3: [stage_3_scanning_objects, "section_3_scanned"],
-                4: [stage_4_scanning_objects, "section_4_scanned"],
-                5: [stage_5_scanning_objects, "section_5_scanned"],
-                6: [stage_6_scanning_objects, "section_6_scanned"],
-                7: [stage_7_scanning_objects, "section_7_scanned"],
-                8: [stage_8_scanning_objects, "section_8_scanned"],
-            }
-
-            for stage in range(0, 9):
-                for _id in stage_switch[stage][0]:
+            for stage in range(0, self.count_of_scanning_zones):
+                for _id in scanning_objects[stage]:
                     potato_obj = self.active_potato_objects[_id]
                     x0, y0, x1, y1 = potato_obj.bounds
                     sub_img = frame[int(y0):int(y1), int(x0):int(x1)]
                     logger.debug(f"Scanning potato {_id} for defects in stage {stage + 1}")
                     sub_img = Image.fromarray(sub_img).convert("RGB")
-                    sub_img = data_transform(sub_img).unsqueeze(0)
-                    with torch.no_grad():
-                        outputs = self.defected_potato_classifier(sub_img)
-                        potato_obj.evaluation_results += outputs
-                    potato_obj.__setattr__(stage_switch[stage][1], True)
+                    sub_img = data_transform(sub_img)
+                    potato_obj.img_patches.append(sub_img)
+                    potato_obj.sections_scanned.append(stage)
                     logger.debug(f"Potato {_id} completed stage {stage + 1} scanning")
 
             for _id, potato_obj in self.active_potato_objects.items():
                 if (
-                        potato_obj.__getattribute__(stage_switch[8][1]) and
+                        (self.count_of_scanning_zones - 1) in potato_obj.sections_scanned and
                         not potato_obj.final_evaluation_complete
                 ):
-                    eval_res = potato_obj.evaluation_results
-                    pred_class = eval_res.argmax(dim=1).item()
+                    sub_imgs = torch.stack(potato_obj.img_patches, dim=0)
+                    with torch.no_grad():
+                        eval_res = self.defected_potato_classifier(sub_imgs).sum(dim=0)
+                    pred_class = eval_res.argmax(dim=0).item()
                     if pred_class == 0: #and abs(eval_res[0][1]-eval_res[0][0]) > 15:
                         text_browser.append(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
                         self.potato_timing_queue.put(time.time())

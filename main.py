@@ -39,7 +39,7 @@ class MyApp(QMainWindow):
         self.camera_activated = False
         self.counter = 0
         self.prev_total_objects_count = 0
-        self.tracker = PotatoTracker(MainConfigs.CAMERA_FRAME_SHAPE, potato_defects_queue, potato_timing_queue)
+        self.tracker = PotatoTracker(MainConfigs.CAMERA_FRAME_SHAPE, MainConfigs.SCAN_ZONES_COUNT, potato_timing_queue)
 
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setScaledContents(True)
@@ -67,7 +67,7 @@ class MyApp(QMainWindow):
         if not self.camera_activated:
             if self.camera is None:
                 self.camera = CameraFactory.get_camera_device(
-                    MainConfigs.PREFERRED_CAMERA_DEVICE, "video/14-57.avi"
+                    MainConfigs.PREFERRED_CAMERA_DEVICE, "video/17-09.avi"
                 )
             if self.camera.device_is_activated():
                 self.camera_activated = True
