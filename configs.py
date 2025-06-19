@@ -49,3 +49,7 @@ class MainConfigs:
                                         )#"16-51 09-38.avi")
     AVI_CAMERA_FPS: int = 130
     CAMERA_AUTOSTART: bool = True  #False Whether to start camera automatically when application starts
+    AVI_CAMERA_START_FRAME: int = 320
+    USE_AIR: bool = True
+    NOZZLE_ACTIVATION_DELAY = 1.9 #controller po53 =  75 = 130 potat min
+    #5.5 2000 rpm motor
