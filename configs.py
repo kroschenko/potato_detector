@@ -10,8 +10,7 @@ class MainConfigs:
     DO3THINK_CAMERA_NAME: str = "DO3THINK-04B400000199-"
     OPENCV_CAMERA_DESC: Any = 0
     POTATO_DETECTOR_PATH: str = "models/potato_det.pt"
-    DEFECTS_CLASSIFIER_PATH: str = "models/defects_classifier.pth"
-    DEFECTS_DETECTOR_PATH: str = "models/mechdamage_detector.pt"
+    DEFECTS_CLASSIFIER_PATH: str = "models/defects_classifier_v3.pth"
     MAIN_FORM_NAME: str = "mainForm.ui"
     CAMERA_STATUS_STYLE_ON: str = """ 
                 QLabel { 
@@ -29,9 +28,8 @@ class MainConfigs:
     POTATO_DETECTION_CONFIDENCE_THRESHOLD: float = 0.85
     DEFECTS_DETECTION_CONFIDENCE_THRESHOLD: float = 0.75
     SCANNING_WINDOW: int = 50
-    FIRST_STAGE_MIDDLE_POINT: float = 0.165
-    SECOND_STAGE_MIDDLE_POINT: float = 0.495
-    THIRD_STAGE_MIDDLE_POINT: float = 0.825
+    SCAN_ZONES_COUNT: int = 9
+    DEFAULT_DEVICE: str = "cpu"
     CAMERA_FRAME_SHAPE: Tuple = (1080, 1920, 3)
     NOZZLE_ACTIVATION_DELAY = 5
     SAVE_PATH: str = os.path.join(os.path.expanduser("~"), "frames")
@@ -51,3 +49,7 @@ class MainConfigs:
                                         )#"16-51 09-38.avi")
     AVI_CAMERA_FPS: int = 130
     CAMERA_AUTOSTART: bool = True  #False Whether to start camera automatically when application starts
+    AVI_CAMERA_START_FRAME: int = 320
+    USE_AIR: bool = True
+    NOZZLE_ACTIVATION_DELAY = 1.9 #controller po53 =  75 = 130 potat min
+    #5.5 2000 rpm motor

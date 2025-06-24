@@ -1,7 +1,7 @@
 class PotatoObject:
     def __init__(self, _id: int):
         self.id = _id
-        self.first_section_scanned = False
-        self.second_section_scanned = False
-        self.third_section_scanned = False
+        self.sections_scanned = []
         self.bounds = None
+        self.final_evaluation_complete = False
+        self.img_patches = []
