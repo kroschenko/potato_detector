@@ -37,7 +37,7 @@ class Camera:
 class DO3ThinkCamera(Camera):
     def __init__(self, cam_descriptor: str = None):
         if cam_descriptor is None:
-            cam_descriptor = MainConfigs.DO3THINK_CAMERA_NAME
+            cam_descriptor = MainConfigs.DO3THINK_CAMERA_1_NAME
         super().__init__(cam_descriptor)
         try:
             self.device = Aravis.Camera.new(self.cam_descriptor)

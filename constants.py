@@ -19,3 +19,4 @@ class Messages:
     CAMERA_IS_OFF: str = "Камера выключена"
     CAMERA_IS_ON: str = "Камера включена"
     ERROR_CAMERA_IS_NOT_FOUNDED: str = "Ошибка: не найдена камера!"
+    CURRENT_CAMERA: str = "Текущая камера: "

@@ -56,6 +56,32 @@
         </widget>
        </item>
        <item>
+        <widget class="QLabel" name="current_camera">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>18</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>17</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QLabel {
+                color: red;
+			   font-weight: bold;
+            }</string>
+         </property>
+         <property name="text">
+          <string>Активная камера:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="label">
          <property name="minimumSize">
           <size>
@@ -184,7 +210,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="calibrate_button">
+        <widget class="QPushButton" name="other_cam_button">
          <property name="styleSheet">
           <string notr="true">QPushButton {
                 background-color: #e74c3c;
@@ -202,8 +228,8 @@
             }</string>
          </property>
          <property name="text">
-          <string>Выполнить
- калибровку</string>
+          <string>Другая
+ камера</string>
          </property>
         </widget>
        </item>
