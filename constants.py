@@ -7,6 +7,7 @@ class Color:
     RED: Tuple = (255, 0, 0)
 
 
+@dataclass
 class Messages:
     APPEND_DAMAGED_POTATOES: str = "добавлен в список поврежденных клубней"
     OBJECTS_COUNT: str = "Количество объектов:"

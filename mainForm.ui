@@ -234,38 +234,6 @@
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="null_counter_button">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QPushButton {
-                background-color: #e74c3c;
-                color: white;
-                font-weight: bold;
-                border: 2px solid #c0392b;
-                border-radius: 8px;
-                padding: 5px;
-            }
-            QPushButton:hover {
-                background-color: #c0392b;
-            }
-            QPushButton:pressed {
-                background-color: #922b21;
-            }
-		  QPushButton:disabled {
-    			  background-color: #95a5a6; /* Серый цвет для неактивной кнопки */
-    			  color: #bdc3c7; /* Бледный текст */
-    			  border: 1px solid #7f8c8d;
-		  }</string>
-         </property>
-         <property name="text">
-          <string>Сбросить
- счетчик</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QPushButton" name="exit_button">
          <property name="styleSheet">
           <string notr="true">QPushButton {

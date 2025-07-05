@@ -1,56 +1,109 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import os
-from typing import Any, Tuple
+from typing import Any, Dict, Tuple
 
 from main_types import CameraType
 
 
 @dataclass
 class MainConfigs:
-    DO3THINK_CAMERA_1_NAME: str = "DO3THINK-04B400000199-"
-    DO3THINK_CAMERA_2_NAME: str = ""
-    OPENCV_CAMERA_DESC: Any = 0
+    MAIN_FORM_NAME: str = "mainForm.ui"
+    DEFAULT_DEVICE: str = "cpu"
+    SAVE_FRAMES: bool = False
+    SAVE_PATH: str = os.path.join(os.path.expanduser("~"), "frames")
+
+
+@dataclass
+class LoggerConfigs:
+    LOG_FILE_MAX_SIZE: int = 1 * 1024 * 1024  # 10MB
+    LOG_BACKUP_COUNT: int = 5
+    LOG_LEVEL: str = "INFO"  # ,DEBUG , WARNING, ERROR
+
+
+@dataclass
+class ModelsConfigs:
     POTATO_DETECTOR_PATH: str = "models/potato_det.pt"
     DEFECTS_CLASSIFIER_PATH: str = "models/defects_classifier_v3.pth"
-    MAIN_FORM_NAME: str = "mainForm.ui"
-    CAMERA_STATUS_STYLE_ON: str = """ 
-                QLabel { 
-                    color: green; 
-                    font-weight: bold; 
-                }
-            """
-    CAMERA_STATUS_STYLE_OFF: str = """ 
-                QLabel { 
-                    color: red; 
-                    font-weight: bold; 
-                }
-            """
     NUM_CLASSES: int = 2
     POTATO_DETECTION_CONFIDENCE_THRESHOLD: float = 0.85
     DEFECTS_DETECTION_CONFIDENCE_THRESHOLD: float = 0.75
+
+
+@dataclass
+class TrackerConfigs:
+    FRAME_SIZE: Tuple = (1200, 1920)
     SCANNING_WINDOW: int = 50
     SCAN_ZONES_COUNT: int = 9
-    DEFAULT_DEVICE: str = "cpu"
-    CAMERA_FRAME_SHAPE: Tuple = (1080, 1920, 3)
-    #NOZZLE_ACTIVATION_DELAY = 5
-    SAVE_PATH: str = os.path.join(os.path.expanduser("~"), "frames")
-    # AVI file camera emulation settings
-    # not used USE_AVI_CAMERA: bool = False
-    #AVI_CAMERA_START_FRAME: int = 0 # Frame number to start playback from (0-based)
-    # Logging configuration
-    LOG_FILE_MAX_SIZE: int = 1 * 1024 * 1024  # 10MB
-    LOG_BACKUP_COUNT: int = 5
-    PREFERRED_CAMERA_1_DEVICE: CameraType = CameraType.AVI_CAMERA   #CameraType.DO3THINK_CAMERA # # CameraType.OPENCV_CAMERA##
-    PREFERRED_CAMERA_2_DEVICE: CameraType = CameraType.AVI_CAMERA
-    AVI_CAMERA_LOOP: bool = False
     USE_AIR: bool = True
-    SAVE_FRAMES: bool = False
-    LOG_LEVEL: str = "INFO"  # ,DEBUG , WARNING, ERROR
-    AVI_CAMERA_PATH: str = os.path.join(os.path.expanduser("./video/"),
-                                        "14-31.avi"
-                                        )#"16-51 09-38.avi")
-    AVI_CAMERA_FPS: int = 130
-    CAMERA_AUTOSTART: bool = True  #False Whether to start camera automatically when application starts
-    AVI_CAMERA_START_FRAME: int = 320
-    NOZZLE_ACTIVATION_DELAY = 1.9 #controller po53 =  75 = 130 potat min
-    #5.5 2000 rpm motor
+    NOZZLE_ACTIVATION_DELAY = 1.9  # controller po53 =  75 = 130 potat min
+    # 5.5 2000 rpm motor
+
+
+# @dataclass
+class CameraConfigs:
+    CAMERA_STATUS_STYLE_ON: str = """ 
+                    QLabel { 
+                        color: green; 
+                        font-weight: bold; 
+                    }
+                """
+    CAMERA_STATUS_STYLE_OFF: str = """ 
+                    QLabel { 
+                        color: red; 
+                        font-weight: bold; 
+                    }
+                """
+    CAMERA_AUTOSTART: bool = True
+    # DO3THINK_CAMERA_DEVICE: Dict[str, Any] = {
+    #     "descriptor": "DO3THINK-04B400000199-",
+    #     "frame_shape": (1080, 1920, 3),
+    #     "type": CameraType.DO3THINK_CAMERA,
+    # }
+    # OPENCV_CAMERA_DEVICE: Dict[str, Any] = {
+    #     "descriptor": 0,
+    #     "frame_shape": (720, 1280, 3),
+    #     "type": CameraType.OPENCV_CAMERA,
+    # }
+    # AVI_DEVICE: Dict[str, Any] = field(default_factory=get_avi_device_params)
+
+
+@dataclass
+class CameraConfig:
+    descriptor: str
+    frame_shape: Tuple
+    type: CameraType
+    #     "frame_shape": (1080, 1920, 3)
+    #     "type": CameraType.DO3THINK_CAMERA
+
+
+@dataclass
+class Do3ThinkCameraConfig(CameraConfig):
+    descriptor: str = "DO3THINK-04B400000199-"
+    frame_shape: Tuple = (1200, 1920, 3)
+    type: CameraType = CameraType.DO3THINK_CAMERA
+
+
+@dataclass
+class OpenCVCameraConfig(CameraConfig):
+    descriptor: int = 0
+    frame_shape: Tuple = (720, 1280, 3)
+    type: CameraType = CameraType.OPENCV_CAMERA
+
+
+@dataclass
+class AVICameraConfig(CameraConfig):
+    descriptor: str = os.path.join(os.path.expanduser("./video/"), "14-31.avi")
+    frame_shape: Tuple = (1200, 1920, 3)
+    type: CameraType = CameraType.AVI_CAMERA
+    fps: int = 130
+    loop: bool = False
+    start_frame: int = 0
+
+#
+# class AVICameraConfig:
+#     "descriptor": os.path.join(os.path.expanduser("./video/"), "14-31.avi")
+#     "frame_shape": (1080, 1920, 3)
+#     "type": CameraType.AVI_CAMERA
+#     "fps": 130
+#     "loop": False
+#     "start_frame": 320

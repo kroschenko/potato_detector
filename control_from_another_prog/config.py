@@ -1,6 +1,7 @@
 # Server configuration
-#RASPBERRY_SERVER_URL = "http://localhost:8000"  # Change this to your server's address
-RASPBERRY_SERVER_URL = "http://192.168.0.108:8000"  # Change this to your server's address
+RASPBERRY_SERVER_URL = (
+    "http://192.168.0.108:8000"  # Change this to your server's address
+)
 
 # Nozzle configuration
 NOZZLE_ID_1 = "nozzle1"
