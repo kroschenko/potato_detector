@@ -1,14 +1,15 @@
 import requests
 import time
-from .config import NOZZLE_ENDPOINT, IMPULSE_LENGTH_MS
+from .config import TOP_NOZZLE_ENDPOINT, BOTTOM_NOZZLE_ENDPOINT, IMPULSE_LENGTH_MS
 
 
-def send_impulse_raspberry():
+def send_impulse_raspberry(cam_id: int) -> None:
     """Send a single impulse to the Raspberry Pi controlled nozzle"""
+    nozzle_endpoint = TOP_NOZZLE_ENDPOINT if cam_id == 0 else BOTTOM_NOZZLE_ENDPOINT
     try:
         # Turn ON
         response = requests.post(
-            NOZZLE_ENDPOINT,
+            nozzle_endpoint,
             json={"state": True}
         )
         response.raise_for_status()
@@ -18,7 +19,7 @@ def send_impulse_raspberry():
         
         # Turn OFF
         response = requests.post(
-            NOZZLE_ENDPOINT,
+            nozzle_endpoint,
             json={"state": False}
         )
         response.raise_for_status()
@@ -31,4 +32,4 @@ def send_impulse_raspberry():
 
 if __name__ == "__main__":
     print(f"Sending {IMPULSE_LENGTH_MS}ms impulse...")
-    send_impulse_raspberry()
+    send_impulse_raspberry(0)

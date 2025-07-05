@@ -15,17 +15,18 @@ from multiprocessing import Process, Queue
 from logger_config import logger
 from control_from_another_prog.simple_impulse import send_impulse_raspberry
 
-global send_proc
+global top_impulse, bottom_impulse
 potato_defects_queue = []
-potato_timing_queue = Queue()
+potato_timing_top_queue = Queue()
+potato_timing_bottom_queue = Queue()
 
 
-def impulse_sender(input_queue: Queue):
+def send_impulse(input_queue: Queue, cam_id: int):
     while True:
         sample = input_queue.get()
         time.sleep(MainConfigs.NOZZLE_ACTIVATION_DELAY - (time.time() - sample))
-        # send_impulse_raspberry()
-        logger.info(f"Send impulse to raspberry board")
+        # send_impulse_raspberry(cam_id)
+        logger.info(f"Send impulse {cam_id} to raspberry board")
 
 
 class MyApp(QMainWindow):
@@ -39,8 +40,12 @@ class MyApp(QMainWindow):
         self.camera_activated = False
         self.counter = 0
         self.prev_total_objects_count = 0
-        self.tracker = PotatoTracker(MainConfigs.CAMERA_FRAME_SHAPE, MainConfigs.SCAN_ZONES_COUNT, potato_timing_queue)
-
+        self.tracker = PotatoTracker(
+            MainConfigs.CAMERA_FRAME_SHAPE,
+            MainConfigs.SCAN_ZONES_COUNT,
+            potato_timing_top_queue,
+            potato_timing_bottom_queue
+        )
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setScaledContents(True)
 
@@ -134,14 +139,18 @@ class MyApp(QMainWindow):
             self.serial_interface_thread.quit()
             self.serial_interface_thread.wait()
         event.accept()
-        if send_proc:
-            send_proc.terminate()
+        if top_impulse:
+            top_impulse.terminate()
+        if bottom_impulse:
+            bottom_impulse.terminate()
 
 
 if __name__ == '__main__':
     if MainConfigs.USE_AIR:
-        send_proc = Process(target=impulse_sender, args=(potato_timing_queue,), daemon=True)
-        send_proc.start()
+        top_impulse = Process(target=send_impulse, args=(potato_timing_top_queue, 0), daemon=True)
+        bottom_impulse = Process(target=send_impulse, args=(potato_timing_bottom_queue, 1), daemon=True)
+        top_impulse.start()
+        bottom_impulse.start()
     app = QApplication([])
     window = MyApp()
     window.show()
