@@ -22,9 +22,10 @@ potato_timing_bottom_queue = Queue()
 
 
 def send_impulse(input_queue: Queue, cam_id: int):
+    delay = MainConfigs.TOP_NOZZLE_ACTIVATION_DELAY if cam_id == 0 else MainConfigs.BOTTOM_NOZZLE_ACTIVATION_DELAY
     while True:
         sample = input_queue.get()
-        time.sleep(MainConfigs.NOZZLE_ACTIVATION_DELAY - (time.time() - sample))
+        time.sleep(delay - (time.time() - sample))
         # send_impulse_raspberry(cam_id)
         logger.info(f"Send impulse {cam_id} to raspberry board")
 
@@ -72,7 +73,7 @@ class MyApp(QMainWindow):
         if not self.camera_activated:
             if self.camera is None:
                 self.camera = CameraFactory.get_camera_device(
-                    MainConfigs.PREFERRED_CAMERA_DEVICE, "video/17-09.avi"
+                    MainConfigs.PREFERRED_CAMERA_DEVICE, "video/2025-07-07_13-11-52_382.wmv"
                 )
             if self.camera.device_is_activated():
                 self.camera_activated = True
