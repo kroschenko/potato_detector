@@ -10,7 +10,7 @@ import cv2
 import numpy as np
 from gi.repository import Aravis
 
-from configs import MainConfigs
+from configs import CameraConfigs, MainConfigs
 from logger_config import logger
 
 class Camera:
@@ -37,7 +37,7 @@ class Camera:
 class DO3ThinkCamera(Camera):
     def __init__(self, cam_descriptor: str = None):
         if cam_descriptor is None:
-            cam_descriptor = MainConfigs.DO3THINK_CAMERA_NAME
+            cam_descriptor = CameraConfigs.DO3THINK_CAMERA_NAME
         super().__init__(cam_descriptor)
         try:
             self.device = Aravis.Camera.new(self.cam_descriptor)
@@ -105,14 +105,14 @@ class OpenCVCamera(Camera):
 class AVICamera(Camera):
     def __init__(self, avi_path: str = None, fps: int = None, loop: bool = None, start_frame: int = None):
         if avi_path is None:
-            avi_path = MainConfigs.AVI_CAMERA_PATH
+            avi_path = CameraConfigs.AVI_CAMERA_PATH
 
         if fps is None:
-            fps = MainConfigs.AVI_CAMERA_FPS
+            fps = CameraConfigs.AVI_CAMERA_FPS
         if loop is None:
-            loop = MainConfigs.AVI_CAMERA_LOOP
+            loop = CameraConfigs.AVI_CAMERA_LOOP
         if start_frame is None:
-            start_frame = MainConfigs.AVI_CAMERA_START_FRAME
+            start_frame = CameraConfigs.AVI_CAMERA_START_FRAME
             
         super().__init__(avi_path)
         logger.info("Initializing AVI camera")
@@ -180,7 +180,6 @@ class AVICamera(Camera):
                     self.last_frame_time = current_time
                     self.current_frame = (self.current_frame + 1) % self.frame_count
                     if self.current_frame % 100 == 0:  # Log every 100 frames
-                        #logger.info(f"Processing frame {self.current_frame}/{self.frame_count}")
                         # Log detailed camera info every 1000 frames
                         if self.current_frame % 1000 == 0:
                             from utils import log_camera_info

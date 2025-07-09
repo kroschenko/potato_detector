@@ -7,7 +7,7 @@ from norfair import Detection, Tracker, draw_points
 from ultralytics import YOLO
 from torchvision import models as torch_models
 
-from configs import MainConfigs
+from configs import MainConfigs, ModelsConfigs, TrackerConfigs
 from constants import Color, Messages
 from potato_object import PotatoObject
 from utils import init_frames, save_frame
@@ -33,13 +33,13 @@ class PotatoTracker:
             potato_timing_top_queue: Queue,
             potato_timing_bottom_queue: Queue
     ) -> None:
-        self.potato_detector = YOLO(MainConfigs.POTATO_DETECTOR_PATH)
+        self.potato_detector = YOLO(ModelsConfigs.POTATO_DETECTOR_PATH)
         self.defected_potato_classifier = torch_models.mobilenet_v3_small(pretrained=False)
-        self.defected_potato_classifier.classifier[3] = torch.nn.Linear(self.defected_potato_classifier.classifier[3].in_features, MainConfigs.NUM_CLASSES)
+        self.defected_potato_classifier.classifier[3] = torch.nn.Linear(self.defected_potato_classifier.classifier[3].in_features, ModelsConfigs.NUM_CLASSES)
 
         device = torch.device("cuda" if torch.cuda.is_available() else MainConfigs.DEFAULT_DEVICE)
         self.potato_detector.to(device)
-        self.defected_potato_classifier.load_state_dict(torch.load(MainConfigs.DEFECTS_CLASSIFIER_PATH, map_location=device))
+        self.defected_potato_classifier.load_state_dict(torch.load(ModelsConfigs.DEFECTS_CLASSIFIER_PATH, map_location=device))
         self.defected_potato_classifier.eval()
         self.tracker = Tracker(distance_function="euclidean", distance_threshold=150)
         self.active_potato_objects = {}
@@ -67,7 +67,7 @@ class PotatoTracker:
         # Reset tracker
         self.tracker = Tracker(distance_function="euclidean", distance_threshold=150)
         # Reinitialize YOLO models
-        self.potato_detector = YOLO(MainConfigs.POTATO_DETECTOR_PATH)
+        self.potato_detector = YOLO(ModelsConfigs.POTATO_DETECTOR_PATH)
         # Force garbage collection
         import gc
         gc.collect()
@@ -96,7 +96,7 @@ class PotatoTracker:
                 for box in frame_result.boxes:
                     x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                     score = box.conf[0].cpu().numpy()
-                    if score > MainConfigs.POTATO_DETECTION_CONFIDENCE_THRESHOLD:
+                    if score > ModelsConfigs.POTATO_DETECTION_CONFIDENCE_THRESHOLD:
                         center = np.array([(x1 + x2) / 2, (y1 + y2) / 2])
                         bounds.append((x1, y1, x2, y2))
                         centers.append(center)
@@ -141,7 +141,7 @@ class PotatoTracker:
                 for stage in range(0, self.count_of_scanning_zones):
                     if (
                         stage not in potato_obj.sections_scanned
-                        and abs(potato_obj.center[0] - (stage + 1) * self.delta) < MainConfigs.SCANNING_WINDOW
+                        and abs(potato_obj.center[0] - (stage + 1) * self.delta) < TrackerConfigs.SCANNING_WINDOW
                     ):
                         scanning_objects[stage].append(_id)
                         logger.debug(f"Potato {_id} entered stage {stage + 1}")
