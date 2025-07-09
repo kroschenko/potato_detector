@@ -22,7 +22,11 @@ potato_timing_bottom_queue = Queue()
 
 
 def send_impulse(input_queue: Queue, cam_id: int):
-    delay = TrackerConfigs.TOP_NOZZLE_ACTIVATION_DELAY if cam_id == 0 else TrackerConfigs.BOTTOM_NOZZLE_ACTIVATION_DELAY
+    delay = (
+        TrackerConfigs.TOP_NOZZLE_ACTIVATION_DELAY
+        if cam_id == 0
+        else TrackerConfigs.BOTTOM_NOZZLE_ACTIVATION_DELAY
+    )
     while True:
         sample = input_queue.get()
         time.sleep(delay - (time.time() - sample))
@@ -45,7 +49,7 @@ class MyApp(QMainWindow):
             CameraConfigs.CAMERA_FRAME_SHAPE,
             TrackerConfigs.SCAN_ZONES_COUNT,
             potato_timing_top_queue,
-            potato_timing_bottom_queue
+            potato_timing_bottom_queue,
         )
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setScaledContents(True)
@@ -72,7 +76,9 @@ class MyApp(QMainWindow):
         # Запуск камеры
         if not self.camera_activated:
             if self.camera is None:
-                self.camera = CameraFactory.get_camera_device(CameraConfigs.PREFERRED_CAMERA_DEVICE)
+                self.camera = CameraFactory.get_camera_device(
+                    CameraConfigs.PREFERRED_CAMERA_DEVICE
+                )
             if self.camera.device_is_activated():
                 self.camera_activated = True
                 self.camera.start_stream()
@@ -109,11 +115,15 @@ class MyApp(QMainWindow):
             frame = self.tracker.update(frame, self.textBrowser)
             h, w, ch = frame.shape
             bytes_per_line = ch * w
-            qt_img = QImage(frame.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
+            qt_img = QImage(
+                frame.data, w, h, bytes_per_line, QImage.Format.Format_RGB888
+            )
 
             # Масштабируем изображение под размер окна
             scaled_pixmap = QPixmap.fromImage(qt_img).scaled(
-                self.label.width(), self.label.height(), Qt.AspectRatioMode.KeepAspectRatio
+                self.label.width(),
+                self.label.height(),
+                Qt.AspectRatioMode.KeepAspectRatio,
             )
             self.label.setPixmap(scaled_pixmap)
             current_objects_total_count = self.tracker.get_total_objects_count()
@@ -134,7 +144,7 @@ class MyApp(QMainWindow):
         self.tracker.log_final_statistics(self.counter)
         if self.camera:
             self.camera.stop_stream()
-        if TrackerConfigs.USE_AIR and hasattr(self, 'serial_interface_thread'):
+        if TrackerConfigs.USE_AIR and hasattr(self, "serial_interface_thread"):
             self.serial_interface_thread.quit()
             self.serial_interface_thread.wait()
         event.accept()
@@ -144,10 +154,14 @@ class MyApp(QMainWindow):
             bottom_impulse.terminate()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if TrackerConfigs.USE_AIR:
-        top_impulse = Process(target=send_impulse, args=(potato_timing_top_queue, 0), daemon=True)
-        bottom_impulse = Process(target=send_impulse, args=(potato_timing_bottom_queue, 1), daemon=True)
+        top_impulse = Process(
+            target=send_impulse, args=(potato_timing_top_queue, 0), daemon=True
+        )
+        bottom_impulse = Process(
+            target=send_impulse, args=(potato_timing_bottom_queue, 1), daemon=True
+        )
         top_impulse.start()
         bottom_impulse.start()
     app = QApplication([])

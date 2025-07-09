@@ -35,7 +35,9 @@ class TrackerConfigs:
     SCANNING_WINDOW: int = 50
     SCAN_ZONES_COUNT: int = 9
     USE_AIR: bool = True
-    TOP_NOZZLE_ACTIVATION_DELAY = 1.9  # controller po53 =  75 = 130 potat min 5.5 2000 rpm motor
+    TOP_NOZZLE_ACTIVATION_DELAY = (
+        1.9  # controller po53 =  75 = 130 potat min 5.5 2000 rpm motor
+    )
     BOTTOM_NOZZLE_ACTIVATION_DELAY = 1.9
 
 
