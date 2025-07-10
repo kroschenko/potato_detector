@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import os
-from typing import Any, Tuple
+from typing import Tuple
 
 from main_types import CameraType
 
@@ -35,9 +35,7 @@ class TrackerConfigs:
     SCANNING_WINDOW: int = 50
     SCAN_ZONES_COUNT: int = 9
     USE_AIR: bool = True
-    TOP_NOZZLE_ACTIVATION_DELAY = (
-        1.9  # controller po53 =  75 = 130 potat min 5.5 2000 rpm motor
-    )
+    TOP_NOZZLE_ACTIVATION_DELAY = 1.9
     BOTTOM_NOZZLE_ACTIVATION_DELAY = 1.9
 
 
@@ -61,5 +59,5 @@ class CameraConfigs:
     AVI_CAMERA_LOOP: bool = False
     AVI_CAMERA_FPS: int = 130
     AVI_CAMERA_START_FRAME: int = 0
-    AVI_CAMERA_PATH: str = os.path.join(os.path.expanduser("./video/"), "14-31.avi")
+    AVI_CAMERA_PATH: str = os.path.join(os.path.expanduser("./video/"), "13-29.avi")
     DO3THINK_CAMERA_NAME: str = "DO3THINK-04B400000199-"

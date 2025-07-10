@@ -1,14 +1,13 @@
 import time
 
-import cv2
 import numpy as np
 import torch
-from norfair import Detection, Tracker, draw_points
+from norfair import Detection, Tracker
 from ultralytics import YOLO
 from torchvision import models as torch_models
 
 from configs import MainConfigs, ModelsConfigs, TrackerConfigs
-from constants import Color, Messages
+from constants import Messages
 from potato_object import PotatoObject
 from utils import init_frames, save_frame
 from logger_config import logger
@@ -39,7 +38,7 @@ class PotatoTracker:
     ) -> None:
         self.potato_detector = YOLO(ModelsConfigs.POTATO_DETECTOR_PATH)
         self.defected_potato_classifier = torch_models.mobilenet_v3_small(
-            pretrained=False
+            weights=None
         )
         self.defected_potato_classifier.classifier[3] = torch.nn.Linear(
             self.defected_potato_classifier.classifier[3].in_features,
@@ -100,7 +99,7 @@ class PotatoTracker:
         )
         logger.info("       ")
 
-    def update(self, frame, text_browser):
+    def update(self, frame):
         if frame is not None:
             if MainConfigs.SAVE_FRAMES:
                 save_frame(self.frame_path, frame)
@@ -117,9 +116,6 @@ class PotatoTracker:
                         bounds.append((x1, y1, x2, y2))
                         centers.append(center)
                         detections.append(Detection(center))
-                        frame = cv2.rectangle(
-                            frame, (int(x1), int(y1)), (int(x2), int(y2)), Color.RED, 3
-                        )
                         camera_id = 1 if center[1] > self.camera_split_line else 0
                         camera_ids.append(camera_id)
                         detected_count += 1
@@ -166,7 +162,7 @@ class PotatoTracker:
                 for _id in scanning_objects[stage]:
                     potato_obj = self.active_potato_objects[_id]
                     x0, y0, x1, y1 = potato_obj.bounds
-                    sub_img = frame[int(y0) : int(y1), int(x0) : int(x1)]
+                    sub_img = frame[int(y0):int(y1), int(x0):int(x1)]
                     logger.debug(
                         f"Scanning potato {_id} for defects in stage {stage + 1}"
                     )
@@ -191,15 +187,6 @@ class PotatoTracker:
                         eval_res = self.defected_potato_classifier(sub_imgs).sum(dim=0)
                     pred_class = eval_res.argmax(dim=0).item()
                     if pred_class == 0:  # and abs(eval_res[0][1]-eval_res[0][0]) > 15:
-                        text_browser.append(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
+                        logger.info(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
                         timing_queue.put(time.time())
                     potato_obj.final_evaluation_complete = True
-
-            draw_points(
-                frame,
-                tracked_objects,
-                text_size=8,
-                text_color=Color.RED,
-                color=Color.RED,
-            )
-        return frame

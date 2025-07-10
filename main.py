@@ -1,13 +1,9 @@
 import time
 
 import cv2
-from PyQt6 import uic
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QImage, QPixmap
-from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
 import utils
 
-from configs import CameraConfigs, MainConfigs, TrackerConfigs
+from configs import CameraConfigs, TrackerConfigs
 from constants import Messages
 from factories import CameraFactory
 from tracker import PotatoTracker
@@ -34,12 +30,10 @@ def send_impulse(input_queue: Queue, cam_id: int):
         logger.info(f"Send impulse {cam_id} to raspberry board")
 
 
-class MyApp(QMainWindow):
+class Runner:
     def __init__(self):
         super().__init__()
-        uic.loadUi(MainConfigs.MAIN_FORM_NAME, self)
 
-        self.showMaximized()
         self.camera = None
         self.timer = None
         self.camera_activated = False
@@ -51,15 +45,6 @@ class MyApp(QMainWindow):
             potato_timing_top_queue,
             potato_timing_bottom_queue,
         )
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.label.setScaledContents(True)
-
-        self.exit_button.clicked.connect(self.close)
-        self.cam_on_button.clicked.connect(self.activate_camera)
-        self.cam_off_button.clicked.connect(self.deactivate_camera)
-        self.null_counter_button.clicked.connect(self.null_objects_count)
-        self.calibrate_button.clicked.connect(self.calibrate)
-
         # Auto-start camera if configured
         if CameraConfigs.CAMERA_AUTOSTART:
             utils.logger.info("Auto-starting camera as per configuration")
@@ -70,7 +55,7 @@ class MyApp(QMainWindow):
 
     def null_objects_count(self):
         self.counter = 0
-        self.objects_count.setText(f"{Messages.OBJECTS_COUNT} {self.counter}")
+        logger.info(f"{Messages.OBJECTS_COUNT} {self.counter}")
 
     def activate_camera(self):
         # Запуск камеры
@@ -82,59 +67,31 @@ class MyApp(QMainWindow):
             if self.camera.device_is_activated():
                 self.camera_activated = True
                 self.camera.start_stream()
-                self.camera_status.setText(Messages.CAMERA_IS_ON)
-                self.camera_status.setStyleSheet(CameraConfigs.CAMERA_STATUS_STYLE_ON)
-
-                self.cam_on_button.setEnabled(False)
-                self.cam_off_button.setEnabled(True)
 
                 # Таймер для обновления кадров
-                self.timer = QTimer()
-                self.timer.timeout.connect(self.update_frame)
-                self.timer.start(30)
+                while True:
+                    self.update()
             else:
-                mes_box = QMessageBox()
-                mes_box.setText(Messages.ERROR_CAMERA_IS_NOT_FOUNDED)
-                mes_box.exec()
+                logger.error(Messages.ERROR_CAMERA_IS_NOT_FOUNDED)
 
     def deactivate_camera(self):
         if self.camera_activated:
             self.camera_activated = False
             self.camera.stop_stream()
             self.timer = None
-            self.camera_status.setText(Messages.CAMERA_IS_OFF)
-            self.camera_status.setStyleSheet(CameraConfigs.CAMERA_STATUS_STYLE_OFF)
-            self.cam_on_button.setEnabled(True)
-            self.cam_off_button.setEnabled(False)
             self.camera = None
 
-    def update_frame(self):
+    def update(self):
         frame = self.camera.get_next_frame()
         if frame is not None:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            frame = self.tracker.update(frame, self.textBrowser)
-            h, w, ch = frame.shape
-            bytes_per_line = ch * w
-            qt_img = QImage(
-                frame.data, w, h, bytes_per_line, QImage.Format.Format_RGB888
-            )
+            self.tracker.update(frame)
 
-            # Масштабируем изображение под размер окна
-            scaled_pixmap = QPixmap.fromImage(qt_img).scaled(
-                self.label.width(),
-                self.label.height(),
-                Qt.AspectRatioMode.KeepAspectRatio,
-            )
-            self.label.setPixmap(scaled_pixmap)
             current_objects_total_count = self.tracker.get_total_objects_count()
             if current_objects_total_count > self.prev_total_objects_count:
                 self.counter += 1
-                self.objects_count.setText(f"{Messages.OBJECTS_COUNT} {self.counter}")
+                logger.info(f"{Messages.OBJECTS_COUNT} {self.counter}")
                 self.prev_total_objects_count = current_objects_total_count
-            if self.counter > 0:
-                self.null_counter_button.setEnabled(True)
-            else:
-                self.null_counter_button.setEnabled(False)
         else:
             pass
 
@@ -164,7 +121,6 @@ if __name__ == "__main__":
         )
         top_impulse.start()
         bottom_impulse.start()
-    app = QApplication([])
-    window = MyApp()
-    window.show()
-    app.exec()
+
+    runner = Runner()
+    runner.activate_camera()
