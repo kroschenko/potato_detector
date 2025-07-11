@@ -37,9 +37,7 @@ class PotatoTracker:
         potato_timing_bottom_queue: Queue,
     ) -> None:
         self.potato_detector = YOLO(ModelsConfigs.POTATO_DETECTOR_PATH)
-        self.defected_potato_classifier = torch_models.mobilenet_v3_small(
-            weights=None
-        )
+        self.defected_potato_classifier = torch_models.mobilenet_v3_small(weights=None)
         self.defected_potato_classifier.classifier[3] = torch.nn.Linear(
             self.defected_potato_classifier.classifier[3].in_features,
             ModelsConfigs.NUM_CLASSES,
@@ -162,7 +160,7 @@ class PotatoTracker:
                 for _id in scanning_objects[stage]:
                     potato_obj = self.active_potato_objects[_id]
                     x0, y0, x1, y1 = potato_obj.bounds
-                    sub_img = frame[int(y0):int(y1), int(x0):int(x1)]
+                    sub_img = frame[int(y0) : int(y1), int(x0) : int(x1)]
                     logger.debug(
                         f"Scanning potato {_id} for defects in stage {stage + 1}"
                     )

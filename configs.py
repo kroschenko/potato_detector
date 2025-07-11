@@ -34,9 +34,6 @@ class TrackerConfigs:
     FRAME_SIZE: Tuple = (1200, 1920)
     SCANNING_WINDOW: int = 50
     SCAN_ZONES_COUNT: int = 9
-    USE_AIR: bool = True
-    TOP_NOZZLE_ACTIVATION_DELAY = 1.9
-    BOTTOM_NOZZLE_ACTIVATION_DELAY = 1.9
 
 
 @dataclass
@@ -61,3 +58,17 @@ class CameraConfigs:
     AVI_CAMERA_START_FRAME: int = 0
     AVI_CAMERA_PATH: str = os.path.join(os.path.expanduser("./video/"), "13-29.avi")
     DO3THINK_CAMERA_NAME: str = "DO3THINK-04B400000199-"
+
+
+@dataclass
+class NozzleConfigs:
+    USE_AIR: bool = True
+    TOP_NOZZLE_ACTIVATION_DELAY = 1.9
+    BOTTOM_NOZZLE_ACTIVATION_DELAY = 1.9
+    NOZZLE_ACTIVE_PERIOD = 0.5  # in sec
+    TOP_NOZZLE_MNEMONIC = "T"
+    BOTTOM_NOZZLE_MNEMONIC = "B"
+    NOZZLE_ACTIVATED = "1"
+    NOZZLE_INACTIVATED = "0"
+    ARDUINO_BAUD_RATE = 115200
+    ARDUINO_PORT = "/dev/cu.usbserial-120"

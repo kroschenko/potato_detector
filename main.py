@@ -3,13 +3,13 @@ import time
 import cv2
 import utils
 
-from configs import CameraConfigs, TrackerConfigs
+from configs import CameraConfigs, TrackerConfigs, NozzleConfigs
 from constants import Messages
 from factories import CameraFactory
 from tracker import PotatoTracker
 from multiprocessing import Process, Queue
 from logger_config import logger
-from control_from_another_prog.simple_impulse import send_impulse_raspberry
+from arduino.base import transmitter
 
 global top_impulse, bottom_impulse
 potato_defects_queue = []
@@ -17,17 +17,27 @@ potato_timing_top_queue = Queue()
 potato_timing_bottom_queue = Queue()
 
 
-def send_impulse(input_queue: Queue, cam_id: int):
+def activate_nozzle(input_queue: Queue, cam_id: int):
     delay = (
-        TrackerConfigs.TOP_NOZZLE_ACTIVATION_DELAY
+        NozzleConfigs.TOP_NOZZLE_ACTIVATION_DELAY
         if cam_id == 0
-        else TrackerConfigs.BOTTOM_NOZZLE_ACTIVATION_DELAY
+        else NozzleConfigs.BOTTOM_NOZZLE_ACTIVATION_DELAY
+    )
+    nozzle_type = (
+        NozzleConfigs.TOP_NOZZLE_MNEMONIC
+        if cam_id == 0
+        else NozzleConfigs.BOTTOM_NOZZLE_MNEMONIC
     )
     while True:
         sample = input_queue.get()
         time.sleep(delay - (time.time() - sample))
-        # send_impulse_raspberry(cam_id)
-        logger.info(f"Send impulse {cam_id} to raspberry board")
+        message = nozzle_type + NozzleConfigs.NOZZLE_ACTIVATED
+        transmitter.send_message(message + "\n")
+        logger.info(f"Send message {message} to Arduino board")
+        time.sleep(NozzleConfigs.NOZZLE_ACTIVE_PERIOD)
+        message = nozzle_type + NozzleConfigs.NOZZLE_INACTIVATED
+        transmitter.send_message(message + "\n")
+        logger.info(f"Send message {message} to Arduino board")
 
 
 class Runner:
@@ -101,7 +111,7 @@ class Runner:
         self.tracker.log_final_statistics(self.counter)
         if self.camera:
             self.camera.stop_stream()
-        if TrackerConfigs.USE_AIR and hasattr(self, "serial_interface_thread"):
+        if NozzleConfigs.USE_AIR and hasattr(self, "serial_interface_thread"):
             self.serial_interface_thread.quit()
             self.serial_interface_thread.wait()
         event.accept()
@@ -112,12 +122,12 @@ class Runner:
 
 
 if __name__ == "__main__":
-    if TrackerConfigs.USE_AIR:
+    if NozzleConfigs.USE_AIR:
         top_impulse = Process(
-            target=send_impulse, args=(potato_timing_top_queue, 0), daemon=True
+            target=activate_nozzle, args=(potato_timing_top_queue, 0), daemon=True
         )
         bottom_impulse = Process(
-            target=send_impulse, args=(potato_timing_bottom_queue, 1), daemon=True
+            target=activate_nozzle, args=(potato_timing_bottom_queue, 1), daemon=True
         )
         top_impulse.start()
         bottom_impulse.start()
