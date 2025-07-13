@@ -60,7 +60,7 @@ class PotatoTracker:
 
         if MainConfigs.SAVE_FRAMES:
             self.frame_path = init_frames()
-        logger.info("-------------------PotatoTracker initialized")
+        logger.info("PotatoTracker initialized")
         logger.debug(f"Frame size: {frame_size}")
         self.total_defects_detected = 0
         self.camera_split_line = frame_size[0] // 2
@@ -89,13 +89,11 @@ class PotatoTracker:
 
     def log_final_statistics(self, total_counter):
         """Log final statistics about processed potatoes and detected defects"""
-        logger.info("           Final Statistics")
         logger.info(f"Total potatoes processed: {total_counter}")
         logger.info(f"Total defects detected: {self.total_defects_detected}")
         logger.info(
             f"Defect rate: {(self.total_defects_detected/total_counter*100 if total_counter > 0 else 0):.2f}%"
         )
-        logger.info("       ")
 
     def update(self, frame):
         if frame is not None:
