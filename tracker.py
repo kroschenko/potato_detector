@@ -186,5 +186,6 @@ class PotatoTracker:
                     pred_class = eval_res.argmax(dim=0).item()
                     if pred_class == 0:  # and abs(eval_res[0][1]-eval_res[0][0]) > 15:
                         logger.info(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
+                        self.total_defects_detected += 1
                         timing_queue.put(time.time())
                     potato_obj.final_evaluation_complete = True

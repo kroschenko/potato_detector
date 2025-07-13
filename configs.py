@@ -61,14 +61,15 @@ class CameraConfigs:
 
 
 @dataclass
-class NozzleConfigs:
+class ArduinoConfigs:
     USE_AIR: bool = True
     TOP_NOZZLE_ACTIVATION_DELAY = 1.9
     BOTTOM_NOZZLE_ACTIVATION_DELAY = 1.9
     NOZZLE_ACTIVE_PERIOD = 0.5  # in sec
     TOP_NOZZLE_MNEMONIC = "T"
     BOTTOM_NOZZLE_MNEMONIC = "B"
-    NOZZLE_ACTIVATED = "1"
-    NOZZLE_INACTIVATED = "0"
+    LED_MNEMONIC = "P"
+    PIN_HIGH = "1"
+    PIN_LOW = "0"
     ARDUINO_BAUD_RATE = 115200
     ARDUINO_PORT = "/dev/cu.usbserial-120"
