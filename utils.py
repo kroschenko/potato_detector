@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from datetime import datetime
 import os
 import cv2
@@ -19,11 +18,6 @@ def log_camera_info(camera):
     if isinstance(camera, AVICamera):
         logger.debug("AVI Camera Properties:")
         logger.debug(f"  - Video Path: {camera.cam_descriptor}")
-        # logger.debug(f"  - Target FPS: {camera.fps}")
-        # logger.debug(f"  - Loop Enabled: {camera.loop}")
-        # logger.debug(f"  - Start Frame: {camera.current_frame}")
-        # logger.debug(f"  - Total Frames: {camera.frame_count}")
-        # logger.debug(f"  - Frame Delay: {camera.frame_delay:.2f}ms")
 
         if camera.device is not None and camera.device.isOpened():
             logger.debug("Video Properties:")

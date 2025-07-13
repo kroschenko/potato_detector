@@ -1,5 +1,4 @@
 import gi
-import logging
 
 gi.require_version("Aravis", "0.8")
 import ctypes
@@ -10,7 +9,7 @@ import cv2
 import numpy as np
 from gi.repository import Aravis
 
-from configs import CameraConfigs, MainConfigs
+from configs import CameraConfigs
 from logger_config import logger
 
 

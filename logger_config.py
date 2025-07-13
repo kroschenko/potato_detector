@@ -18,7 +18,10 @@ def setup_logging():
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    console_formatter = logging.Formatter("[%(levelname)s] %(message)s")
+
+    console_formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S"
+    )
 
     # Create file handler with rotation
     log_file = os.path.join(log_dir, "video_processor.log")
