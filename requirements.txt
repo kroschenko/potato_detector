@@ -73,8 +73,8 @@ Pygments==2.19.1
 PyGObject==3.52.3
 PyGObject-stubs==2.13.0
 pyparsing==3.2.3
-pyqt6==6.8.1
-PyQt6-Qt6==6.9.0
+pyqt6==6.9.1
+PyQt6-Qt6==6.9.1
 PyQt6_sip==13.10.0
 pyserial==3.5
 PySide6==6.8.3

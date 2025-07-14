@@ -1,5 +1,4 @@
 import gi
-import logging
 
 gi.require_version("Aravis", "0.8")
 import ctypes
@@ -10,8 +9,9 @@ import cv2
 import numpy as np
 from gi.repository import Aravis
 
-from configs import MainConfigs
+from configs import CameraConfigs
 from logger_config import logger
+
 
 class Camera:
     def __init__(self, cam_descriptor: Any):
@@ -37,7 +37,7 @@ class Camera:
 class DO3ThinkCamera(Camera):
     def __init__(self, cam_descriptor: str = None):
         if cam_descriptor is None:
-            cam_descriptor = MainConfigs.DO3THINK_CAMERA_NAME
+            cam_descriptor = CameraConfigs.DO3THINK_CAMERA_NAME
         super().__init__(cam_descriptor)
         try:
             self.device = Aravis.Camera.new(self.cam_descriptor)
@@ -103,24 +103,30 @@ class OpenCVCamera(Camera):
 
 
 class AVICamera(Camera):
-    def __init__(self, avi_path: str = None, fps: int = None, loop: bool = None, start_frame: int = None):
+    def __init__(
+        self,
+        avi_path: str = None,
+        fps: int = None,
+        loop: bool = None,
+        start_frame: int = None,
+    ):
         if avi_path is None:
-            avi_path = MainConfigs.AVI_CAMERA_PATH
+            avi_path = CameraConfigs.AVI_CAMERA_PATH
 
         if fps is None:
-            fps = MainConfigs.AVI_CAMERA_FPS
+            fps = CameraConfigs.AVI_CAMERA_FPS
         if loop is None:
-            loop = MainConfigs.AVI_CAMERA_LOOP
+            loop = CameraConfigs.AVI_CAMERA_LOOP
         if start_frame is None:
-            start_frame = MainConfigs.AVI_CAMERA_START_FRAME
-            
+            start_frame = CameraConfigs.AVI_CAMERA_START_FRAME
+
         super().__init__(avi_path)
         logger.info("Initializing AVI camera")
         logger.info(f"Video path: {avi_path}")
         logger.debug(f"Target FPS: {fps}")
         logger.debug(f"Loop enabled: {loop}")
         logger.debug(f"Start frame: {start_frame}")
-        
+
         self.device = cv2.VideoCapture(avi_path)
         if not self.device.isOpened():
             logger.error(f"Could not open video file: {avi_path}")
@@ -128,15 +134,16 @@ class AVICamera(Camera):
             logger.info("Video opened successfully")
             # Log detailed camera information
             from utils import log_camera_info
+
             log_camera_info(self)
-            
+
             # Set the starting frame if specified
             success = self.device.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
             if success:
                 logger.info(f"Successfully set start frame to: {start_frame}")
             else:
                 logger.warning(f"Failed to set start frame to {start_frame}")
-        
+
         self.fps = fps
         self.loop = loop
         self.frame_count = int(self.device.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -156,13 +163,16 @@ class AVICamera(Camera):
         logger.info(f"Stream started at frame {self.current_frame}")
         # Log camera info when stream starts
         from utils import log_camera_info
+
         log_camera_info(self)
 
     def get_next_frame(self):
         frame = None
         if self.device.isOpened():
-            current_time = cv2.getTickCount() / cv2.getTickFrequency() * 1000  # Current time in milliseconds
-            
+            current_time = (
+                cv2.getTickCount() / cv2.getTickFrequency() * 1000
+            )  # Current time in milliseconds
+
             # Check if enough time has passed since last frame based on FPS
             if current_time - self.last_frame_time >= self.frame_delay:
                 ret, frame = self.device.read()
@@ -180,10 +190,10 @@ class AVICamera(Camera):
                     self.last_frame_time = current_time
                     self.current_frame = (self.current_frame + 1) % self.frame_count
                     if self.current_frame % 100 == 0:  # Log every 100 frames
-                        #logger.info(f"Processing frame {self.current_frame}/{self.frame_count}")
                         # Log detailed camera info every 1000 frames
                         if self.current_frame % 1000 == 0:
                             from utils import log_camera_info
+
                             log_camera_info(self)
         return frame
 
