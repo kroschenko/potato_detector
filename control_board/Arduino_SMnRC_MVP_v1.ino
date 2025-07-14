@@ -7,7 +7,7 @@ uint8_t pin_RELAY_TOP=4;
 uint8_t pin_RELAY_BOTTOM=5;
 bool relay_high_level_trigger = false; // false for low level trigger;
 
-uint16_t duration_nuzzle_open = 363; // duration of open nuzzle
+uint16_t duration_nozzle_open = 363; // duration of open nozzle
 const long interval = 5000;
 const long timeout_interval = 25000; // wait ping interval;
 
@@ -22,10 +22,8 @@ bool previous_state = false;
 unsigned long counter = 0; // Counter rollers
 unsigned long previousMillis = 0;
 unsigned long last_command_time = 0;
-unsigned long nuzzle_top_open = 0;
-unsigned long nuzzle_bottom_open = 0;
-bool is_nuzzle_top_open = false;
-bool is_nuzzle_bottom_open = false;
+unsigned long nozzle_top_open = 0;
+unsigned long nozzle_bottom_open = 0;
 bool laser_state = 0;
 bool relay_top_state = 0;
 bool relay_bottom_state = 0;
@@ -96,8 +94,8 @@ void loop() {
         state = 1;
         
       switch (input[0]) {
-        case 'B': relay_top_state = true; set = 1; nuzzle_top_open = millis(); break; // Reley Top
-        case 'T': relay_bottom_state = true; set = 1; nuzzle_bottom_open = millis(); break; // Relay Bottom
+        case 'B': relay_top_state = true; set = 1; nozzle_top_open = millis(); break; // Reley Top
+        case 'T': relay_bottom_state = true; set = 1; nozzle_bottom_open = millis(); break; // Relay Bottom
         case 'S': laser_state = state; set = 1; break; // Speed on/off
         case 'C': calibration = state; set = 1; break; // Calibration LDR
         case 'H': show_config(); set = 1; break; // Show configuration info (Help)
@@ -127,10 +125,10 @@ void loop() {
 
   unsigned long currentMillis = millis();
 
-  if ( (relay_top_state) && (currentMillis - nuzzle_top_open >= duration_nuzzle_open) )
+  if ( (relay_top_state) && (currentMillis - nozzle_top_open >= duration_nozzle_open) )
       relay_top_state = false;
 
-  if ( (relay_bottom_state) && (currentMillis - nuzzle_bottom_open >= duration_nuzzle_open) )
+  if ( (relay_bottom_state) && (currentMillis - nozzle_bottom_open >= duration_nozzle_open) )
       relay_bottom_state = false;
           
   if (relay_high_level_trigger) {
