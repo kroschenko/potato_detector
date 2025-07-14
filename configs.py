@@ -56,7 +56,9 @@ class CameraConfigs:
     AVI_CAMERA_LOOP: bool = False
     AVI_CAMERA_FPS: int = 130
     AVI_CAMERA_START_FRAME: int = 0
-    AVI_CAMERA_PATH: str = os.path.join(os.path.expanduser("./video/"), "13-29.avi")
+    AVI_CAMERA_PATH: str = os.path.join(
+        os.path.expanduser("./video/"), "20250710-2streams_bad.wmv"
+    )
     DO3THINK_CAMERA_NAME: str = "DO3THINK-04B400000199-"
 
 
@@ -64,8 +66,7 @@ class CameraConfigs:
 class ArduinoConfigs:
     USE_AIR: bool = True
     TOP_NOZZLE_ACTIVATION_DELAY = 1.9
-    BOTTOM_NOZZLE_ACTIVATION_DELAY = 1.9
-    NOZZLE_ACTIVE_PERIOD = 0.5  # in sec
+    BOTTOM_NOZZLE_ACTIVATION_DELAY = 2.1
     TOP_NOZZLE_MNEMONIC = "T"
     BOTTOM_NOZZLE_MNEMONIC = "B"
     LED_MNEMONIC = "P"

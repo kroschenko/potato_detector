@@ -6,7 +6,7 @@ from norfair import Detection, Tracker
 from ultralytics import YOLO
 from torchvision import models as torch_models
 
-from configs import MainConfigs, ModelsConfigs, TrackerConfigs
+from configs import MainConfigs, ModelsConfigs, TrackerConfigs, ArduinoConfigs
 from constants import Messages
 from potato_object import PotatoObject
 from utils import init_frames, save_frame
@@ -178,6 +178,11 @@ class PotatoTracker:
                         if potato_obj.camera_id == 0
                         else self.potato_timing_bottom_queue
                     )
+                    time_delay = (
+                        ArduinoConfigs.TOP_NOZZLE_ACTIVATION_DELAY
+                        if potato_obj.camera_id == 0
+                        else ArduinoConfigs.BOTTOM_NOZZLE_ACTIVATION_DELAY
+                    )
                     sub_imgs = torch.stack(potato_obj.img_patches, dim=0)
                     with torch.no_grad():
                         eval_res = self.defected_potato_classifier(sub_imgs).sum(dim=0)
@@ -185,5 +190,5 @@ class PotatoTracker:
                     if pred_class == 0:  # and abs(eval_res[0][1]-eval_res[0][0]) > 15:
                         logger.info(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
                         self.total_defects_detected += 1
-                        timing_queue.put(time.time())
+                        timing_queue.put(time.time() + time_delay)
                     potato_obj.final_evaluation_complete = True
