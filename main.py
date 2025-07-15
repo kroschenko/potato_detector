@@ -8,6 +8,7 @@ from tracker import PotatoTracker
 from multiprocessing import Process, Queue
 from logger_config import logger
 from arduino import activate_nozzle, led_on
+from main_types import CameraType
 
 global top_impulse, bottom_impulse
 potato_defects_queue = []
@@ -53,8 +54,12 @@ class Runner:
                 self.camera.start_stream()
 
                 # Таймер для обновления кадров
-                while (frame := self.camera.get_next_frame()) is not None:
-                    self.update(frame)
+                while True:
+                    if (frame := self.camera.get_next_frame()) is not None:
+                        self.update(frame)
+                    else:
+                        if CameraConfigs.PREFERRED_CAMERA_DEVICE in [CameraType.OPENCV_CAMERA, CameraType.AVI_CAMERA]:
+                            break
             else:
                 logger.error(Messages.ERROR_CAMERA_IS_NOT_FOUNDED)
 
