@@ -23,6 +23,7 @@ def activate_nozzle(input_queue: Queue, cam_id: int):
 
 
 def led_on():
-    message = ArduinoConfigs.LED_MNEMONIC + ArduinoConfigs.PIN_HIGH
-    transmitter.send_message(message + "\n")
-    logger.info(f"Send message {message} to Arduino board")
+    if ArduinoConfigs.ARDUINO_ONLINE:
+        message = ArduinoConfigs.LED_MNEMONIC + ArduinoConfigs.PIN_HIGH
+        transmitter.send_message(message + "\n")
+        logger.info(f"Send message {message} to Arduino board")

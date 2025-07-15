@@ -14,4 +14,4 @@ class ArduinoTransmitter:
         self.port.write(message.encode("utf-8"))
 
 
-transmitter = ArduinoTransmitter()
+transmitter = ArduinoTransmitter() if ArduinoConfigs.ARDUINO_ONLINE else None

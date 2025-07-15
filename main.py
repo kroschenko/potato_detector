@@ -60,7 +60,6 @@ class Runner:
                     else:
                         if CameraConfigs.PREFERRED_CAMERA_DEVICE in [CameraType.OPENCV_CAMERA, CameraType.AVI_CAMERA]:
                             break
-
             else:
                 logger.error(Messages.ERROR_CAMERA_IS_NOT_FOUNDED)
 
