@@ -64,8 +64,8 @@ class CameraConfigs:
 
 @dataclass
 class ArduinoConfigs:
-    USE_AIR: bool = True
-    ARDUINO_ONLINE: bool = True
+    USE_AIR: bool = False
+    ARDUINO_ONLINE: bool = False
     TOP_NOZZLE_ACTIVATION_DELAY = 1.9
     BOTTOM_NOZZLE_ACTIVATION_DELAY = 2.1
     TOP_NOZZLE_MNEMONIC = "T"

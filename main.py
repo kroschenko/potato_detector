@@ -1,19 +1,15 @@
 import cv2
 import utils
 
-from configs import CameraConfigs, TrackerConfigs, ArduinoConfigs
+from configs import CameraConfigs, TrackerConfigs
 from constants import Messages
 from factories import CameraFactory
 from tracker import PotatoTracker
-from multiprocessing import Process, Queue
 from logger_config import logger
-from arduino import activate_nozzle, led_on
+from arduino import led_on
 from main_types import CameraType
 
-global top_impulse, bottom_impulse
 potato_defects_queue = []
-potato_timing_top_queue = Queue()
-potato_timing_bottom_queue = Queue()
 
 
 class Runner:
@@ -28,8 +24,6 @@ class Runner:
         self.tracker = PotatoTracker(
             CameraConfigs.CAMERA_FRAME_SHAPE,
             TrackerConfigs.SCAN_ZONES_COUNT,
-            potato_timing_top_queue,
-            potato_timing_bottom_queue,
         )
 
     def __enter__(self):
@@ -82,24 +76,9 @@ class Runner:
             self.camera.stop_stream()
             self.timer = None
             self.camera = None
-        if ArduinoConfigs.USE_AIR:
-            potato_timing_top_queue.put(-1)
-            potato_timing_bottom_queue.put(-1)
-            top_impulse.join()
-            bottom_impulse.join()
 
 
 if __name__ == "__main__":
     led_on()
-    if ArduinoConfigs.USE_AIR:
-        top_impulse = Process(
-            target=activate_nozzle, args=(potato_timing_top_queue, 0), daemon=True
-        )
-        bottom_impulse = Process(
-            target=activate_nozzle, args=(potato_timing_bottom_queue, 1), daemon=True
-        )
-        top_impulse.start()
-        bottom_impulse.start()
-
     with Runner() as runner:
         pass

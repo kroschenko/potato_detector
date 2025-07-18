@@ -1,19 +1,17 @@
-import time
-
 import numpy as np
 import torch
 from norfair import Detection, Tracker
 from ultralytics import YOLO
 from torchvision import models as torch_models
 
-from configs import MainConfigs, ModelsConfigs, TrackerConfigs, ArduinoConfigs
+from configs import ArduinoConfigs, MainConfigs, ModelsConfigs, TrackerConfigs
 from constants import Messages
 from potato_object import PotatoObject
 from utils import init_frames, save_frame
 from logger_config import logger
 from torchvision import transforms
 from PIL import Image
-from multiprocessing import Queue
+from arduino import activate_nozzle
 
 
 data_transform = transforms.Compose(
@@ -29,13 +27,7 @@ data_transform = transforms.Compose(
 
 
 class PotatoTracker:
-    def __init__(
-        self,
-        frame_size,
-        count_of_scanning_zones: int,
-        potato_timing_top_queue: Queue,
-        potato_timing_bottom_queue: Queue,
-    ) -> None:
+    def __init__(self, frame_size, count_of_scanning_zones: int) -> None:
         self.potato_detector = YOLO(ModelsConfigs.POTATO_DETECTOR_PATH)
         self.defected_potato_classifier = torch_models.mobilenet_v3_small(weights=None)
         self.defected_potato_classifier.classifier[3] = torch.nn.Linear(
@@ -55,8 +47,6 @@ class PotatoTracker:
         self.active_potato_objects = {}
         self.count_of_scanning_zones = count_of_scanning_zones
         self.delta = frame_size[1] / float(count_of_scanning_zones + 1)
-        self.potato_timing_top_queue = potato_timing_top_queue
-        self.potato_timing_bottom_queue = potato_timing_bottom_queue
 
         if MainConfigs.SAVE_FRAMES:
             self.frame_path = init_frames()
@@ -71,9 +61,6 @@ class PotatoTracker:
         self.active_potato_objects.clear()
         # Reset defect counter
         self.total_defects_detected = 0
-        # Clear queues
-        self.potato_timing_top_queue.close()
-        self.potato_timing_bottom_queue.close()
         # Reset tracker
         self.tracker = Tracker(distance_function="euclidean", distance_threshold=150)
         # Reinitialize YOLO models
@@ -173,16 +160,6 @@ class PotatoTracker:
                     (self.count_of_scanning_zones - 1) in potato_obj.sections_scanned
                     and not potato_obj.final_evaluation_complete
                 ):
-                    timing_queue = (
-                        self.potato_timing_top_queue
-                        if potato_obj.camera_id == 0
-                        else self.potato_timing_bottom_queue
-                    )
-                    time_delay = (
-                        ArduinoConfigs.TOP_NOZZLE_ACTIVATION_DELAY
-                        if potato_obj.camera_id == 0
-                        else ArduinoConfigs.BOTTOM_NOZZLE_ACTIVATION_DELAY
-                    )
                     sub_imgs = torch.stack(potato_obj.img_patches, dim=0)
                     with torch.no_grad():
                         eval_res = self.defected_potato_classifier(sub_imgs).sum(dim=0)
@@ -190,5 +167,6 @@ class PotatoTracker:
                     if pred_class == 0:  # and abs(eval_res[0][1]-eval_res[0][0]) > 15:
                         logger.info(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
                         self.total_defects_detected += 1
-                        timing_queue.put(time.time() + time_delay)
+                        if ArduinoConfigs.USE_AIR:
+                            activate_nozzle(potato_obj.camera_id)
                     potato_obj.final_evaluation_complete = True
