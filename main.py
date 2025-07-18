@@ -52,7 +52,10 @@ class Runner:
                     if (frame := self.camera.get_next_frame()) is not None:
                         self.update(frame)
                     else:
-                        if CameraConfigs.PREFERRED_CAMERA_DEVICE in [CameraType.OPENCV_CAMERA, CameraType.AVI_CAMERA]:
+                        if CameraConfigs.PREFERRED_CAMERA_DEVICE in [
+                            CameraType.OPENCV_CAMERA,
+                            CameraType.AVI_CAMERA,
+                        ]:
                             break
             else:
                 logger.error(Messages.ERROR_CAMERA_IS_NOT_FOUNDED)
