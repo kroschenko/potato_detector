@@ -2,7 +2,7 @@
 #define Title "{\"title\":\"Speed Meter & Relays Control\"}"
 uint8_t pin_RED_LED=2; // 10mA
 uint8_t pin_LASER=3; // 20mA
-uint8_t pin_LDR=A0;
+uint8_t pin_LDR=A0; // 0.5mA
 uint8_t pin_RELAY_TOP=4; // 9mA (solid state relay, not a coil ~70mA.)
 uint8_t pin_RELAY_BOTTOM=5; // 9mA (solid state relay, not a coil ~70mA.)
 // board with chip ATmega328p (Nano, Pro mini) 19mA
@@ -96,8 +96,8 @@ void loop() {
         state = 1;
         
       switch (input[0]) {
-        case 'B': if (state) { relay_top_state = true; set = 1; nozzle_top_open = millis(); } break; // Reley Top
-        case 'T': if (state) { relay_bottom_state = true; set = 1; nozzle_bottom_open = millis(); } break; // Relay Bottom
+        case 'T': if (state) { relay_top_state = true; set = 1; nozzle_top_open = millis(); } break; // Reley Top
+        case 'B': if (state) { relay_bottom_state = true; set = 1; nozzle_bottom_open = millis(); } break; // Relay Bottom
         case 'S': laser_state = state; set = 1; break; // Speed on/off
         case 'C': calibration = state; set = 1; break; // Calibration LDR
         case 'H': show_config(); set = 1; break; // Show configuration info (Help)
