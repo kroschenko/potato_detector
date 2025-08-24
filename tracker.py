@@ -84,11 +84,13 @@ class PotatoTracker:
 
     def update(self, frame):
         if frame is not None:
+            if frame.shape[0] // 2 != self.camera_split_line:
+                self.camera_split_line = frame.shape[0] // 2
             if MainConfigs.SAVE_FRAMES:
                 save_frame(self.frame_path, frame)
             logger.debug("Starting object detection")
             results = self.potato_detector(frame, verbose=False)
-            detections, centers, bounds, camera_ids = [], [], [], []
+            detections, centers, bounds = [], [], []
             detected_count = 0
             for frame_result in results:
                 for box in frame_result.boxes:
@@ -99,8 +101,6 @@ class PotatoTracker:
                         bounds.append((x1, y1, x2, y2))
                         centers.append(center)
                         detections.append(Detection(center))
-                        camera_id = 1 if center[1] > self.camera_split_line else 0
-                        camera_ids.append(camera_id)
                         detected_count += 1
                         logger.debug(
                             f"Detected potato with confidence {score:.2f} at position {center}"
@@ -113,7 +113,7 @@ class PotatoTracker:
             logger.debug(f"Total objects after tracking: {len(tracked_objects)}")
 
             tmp_active = {}
-            for tracked_object, camera_id in zip(tracked_objects, camera_ids):
+            for tracked_object in tracked_objects:
                 last_detection = tracked_object.last_detection
                 if last_detection in detections:
                     _id = tracked_object.id
@@ -123,7 +123,6 @@ class PotatoTracker:
                         logger.debug(f"Updating existing potato object {_id}")
                     else:
                         tmp_active[_id] = PotatoObject(_id)
-                        tmp_active[_id].camera_id = camera_id
                         logger.debug(f"Created new potato object {_id}")
                     tmp_active[_id].bounds = bounds[det_index]
                     tmp_active[_id].center = centers[det_index]
@@ -132,7 +131,7 @@ class PotatoTracker:
             scanning_objects = [[] for _ in range(self.count_of_scanning_zones)]
 
             for _id, potato_obj in self.active_potato_objects.items():
-                for stage in range(0, self.count_of_scanning_zones):
+                for stage in range(self.count_of_scanning_zones-1, -1, -1):
                     if (
                         stage not in potato_obj.sections_scanned
                         and abs(potato_obj.center[0] - (stage + 1) * self.delta)
@@ -141,7 +140,7 @@ class PotatoTracker:
                         scanning_objects[stage].append(_id)
                         logger.debug(f"Potato {_id} entered stage {stage + 1}")
 
-            for stage in range(0, self.count_of_scanning_zones):
+            for stage in range(self.count_of_scanning_zones-1, -1, -1):
                 for _id in scanning_objects[stage]:
                     potato_obj = self.active_potato_objects[_id]
                     x0, y0, x1, y1 = potato_obj.bounds
@@ -157,7 +156,7 @@ class PotatoTracker:
 
             for _id, potato_obj in self.active_potato_objects.items():
                 if (
-                    (self.count_of_scanning_zones - 1) in potato_obj.sections_scanned
+                    0 in potato_obj.sections_scanned
                     and not potato_obj.final_evaluation_complete
                 ):
                     sub_imgs = torch.stack(potato_obj.img_patches, dim=0)
@@ -168,5 +167,7 @@ class PotatoTracker:
                         logger.info(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
                         self.total_defects_detected += 1
                         if ArduinoConfigs.USE_AIR:
+                            center = potato_obj.center[1]
+                            potato_obj.camera_id = 1 if center > self.camera_split_line else 0
                             activate_nozzle(potato_obj.camera_id)
                     potato_obj.final_evaluation_complete = True

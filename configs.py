@@ -57,7 +57,7 @@ class CameraConfigs:
     AVI_CAMERA_FPS: int = 130
     AVI_CAMERA_START_FRAME: int = 0
     AVI_CAMERA_PATH: str = os.path.join(
-        os.path.expanduser("./video/"), "20250710-2streams_bad.wmv"
+        os.path.expanduser("./video/"), "2025-08-23_13-06-15_860.wmv"
     )
     DO3THINK_CAMERA_NAME: str = "DO3THINK-04B400000199-"
 
@@ -66,10 +66,10 @@ class CameraConfigs:
 class ArduinoConfigs:
     USE_AIR: bool = True
     ARDUINO_ONLINE: bool = True
-    TOP_NOZZLE_MNEMONIC = "T"
-    BOTTOM_NOZZLE_MNEMONIC = "B"
+    FIRST_NOZZLE_MNEMONIC = "R1"
+    SECOND_NOZZLE_MNEMONIC = "R2"
     LED_MNEMONIC = "P"
     PIN_HIGH = "1"
     PIN_LOW = "0"
     ARDUINO_BAUD_RATE = 115200
-    ARDUINO_PORT = "/dev/cu.usbserial-1120"
+    ARDUINO_PORT = "/dev/cu.usbserial-120"
