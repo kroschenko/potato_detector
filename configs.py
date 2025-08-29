@@ -7,10 +7,17 @@ from main_types import CameraType
 
 @dataclass
 class MainConfigs:
-    MAIN_FORM_NAME: str = "mainForm.ui"
     DEFAULT_DEVICE: str = "cpu"
+    CUDA_DEVICE: str = "cuda"
     SAVE_FRAMES: bool = False
     SAVE_PATH: str = os.path.join(os.path.expanduser("~"), "frames")
+
+
+@dataclass
+class SorterConfigs:
+    SORT_BY_POTATO_SIZE: bool = True
+    SORT_BY_OUTER_DEFECTS: bool = True
+    POTATO_SIZE_LIMIT: int = 350
 
 
 @dataclass
