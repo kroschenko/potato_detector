@@ -17,7 +17,7 @@ class MainConfigs:
 class SorterConfigs:
     SORT_BY_POTATO_SIZE: bool = True
     SORT_BY_OUTER_DEFECTS: bool = True
-    POTATO_SIZE_LIMIT: int = 350
+    POTATO_SIZE_LIMIT_CENTIMETERS: float = 4.0
 
 
 @dataclass
@@ -41,6 +41,8 @@ class TrackerConfigs:
     FRAME_SIZE: Tuple = (1200, 1920)
     SCANNING_WINDOW: int = 50
     SCAN_ZONES_COUNT: int = 9
+    VISIBLE_AREA_WIDTH_CENTIMETERS: float = 43.0
+    VISIBLE_AREA_HEIGHT_CENTIMETERS: float = 25.0
 
 
 @dataclass

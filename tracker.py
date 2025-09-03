@@ -170,7 +170,14 @@ class PotatoTracker:
                             defect_founded = True
                     if SorterConfigs.SORT_BY_POTATO_SIZE and not defect_founded:
                         x0, y0, x1, y1 = potato_obj.bounds
-                        if y1 - y0 + x1 - x0 < SorterConfigs.POTATO_SIZE_LIMIT:
+
+                        width_pixels = x1 - x0
+                        height_pixels = y1 - y0
+
+                        width_cm = width_pixels * (TrackerConfigs.VISIBLE_AREA_WIDTH_CENTIMETERS / TrackerConfigs.FRAME_SIZE[1])
+                        height_cm = height_pixels * (TrackerConfigs.VISIBLE_AREA_HEIGHT_CENTIMETERS / TrackerConfigs.FRAME_SIZE[0])
+
+                        if width_cm < SorterConfigs.POTATO_SIZE_LIMIT_CENTIMETERS or height_cm < SorterConfigs.POTATO_SIZE_LIMIT_CENTIMETERS:
                             self.add_defected_potato_to_queue(_id, potato_obj)
                     potato_obj.final_evaluation_complete = True
 
