@@ -30,7 +30,7 @@ class LoggerConfigs:
 @dataclass
 class ModelsConfigs:
     POTATO_DETECTOR_PATH: str = "models/potato_det.pt"
-    DEFECTS_CLASSIFIER_PATH: str = "models/defects_classifier_v5.pth"
+    DEFECTS_CLASSIFIER_PATH: str = "models/defects_classifier_v4.pth"
     NUM_CLASSES: int = 2
     POTATO_DETECTION_CONFIDENCE_THRESHOLD: float = 0.85
     DEFECTS_DETECTION_CONFIDENCE_THRESHOLD: float = 0.75
@@ -66,7 +66,7 @@ class CameraConfigs:
     AVI_CAMERA_FPS: int = 130
     AVI_CAMERA_START_FRAME: int = 0
     AVI_CAMERA_PATH: str = os.path.join(
-        os.path.expanduser("./video/"), "2025-08-23_13-06-15_860.wmv"
+        os.path.expanduser("./video/"), "BAD_2.wmv"
     )
     DO3THINK_CAMERA_NAME: str = "DO3THINK-04B400000199-"
 
