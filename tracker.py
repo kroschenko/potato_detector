@@ -169,22 +169,30 @@ class PotatoTracker:
                             self.add_defected_potato_to_queue(_id, potato_obj)
                             defect_founded = True
                     if SorterConfigs.SORT_BY_POTATO_SIZE and not defect_founded:
-                        x0, y0, x1, y1 = potato_obj.bounds
-
-                        width_pixels = x1 - x0
-                        height_pixels = y1 - y0
-
-                        width_cm = width_pixels * (TrackerConfigs.VISIBLE_AREA_WIDTH_CENTIMETERS / TrackerConfigs.FRAME_SIZE[1])
-                        height_cm = height_pixels * (TrackerConfigs.VISIBLE_AREA_HEIGHT_CENTIMETERS / TrackerConfigs.FRAME_SIZE[0])
-
-                        if width_cm < SorterConfigs.POTATO_SIZE_LIMIT_CENTIMETERS or height_cm < SorterConfigs.POTATO_SIZE_LIMIT_CENTIMETERS:
+                        width_cm, height_cm = self.get_size_centimeters(potato_obj)
+                        if width_cm < SorterConfigs.POTATO_SIZE_LIMIT_CENTIMETERS and height_cm < SorterConfigs.POTATO_SIZE_LIMIT_CENTIMETERS:
                             self.add_defected_potato_to_queue(_id, potato_obj)
                     potato_obj.final_evaluation_complete = True
 
     def add_defected_potato_to_queue(self, _id, potato_obj):
-        logger.info(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
+        width_cm, height_cm = self.get_size_centimeters(potato_obj)
+        logger.info(f"{_id} {Messages.APPEND_DAMAGED_POTATOES} {width_cm:.1f}•{height_cm:.1f}cm²")
         self.total_defects_detected += 1
         if ArduinoConfigs.USE_AIR:
             center = potato_obj.center[1]
             potato_obj.camera_id = 1 if center > self.camera_split_line else 0
             activate_nozzle(potato_obj.camera_id)
+
+    def get_size_centimeters(self, potato_obj):
+        if not potato_obj.bounds:
+            return 0.0, 0.0
+        x0, y0, x1, y1 = potato_obj.bounds
+        width_pixels = x1 - x0
+        height_pixels = y1 - y0
+        width_cm = width_pixels * (
+            TrackerConfigs.VISIBLE_AREA_WIDTH_CENTIMETERS / TrackerConfigs.FRAME_SIZE[1]
+        )
+        height_cm = height_pixels * (
+            TrackerConfigs.VISIBLE_AREA_HEIGHT_CENTIMETERS / TrackerConfigs.FRAME_SIZE[0]
+        )
+        return width_cm, height_cm
