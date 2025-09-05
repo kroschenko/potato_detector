@@ -30,7 +30,7 @@ class LoggerConfigs:
 @dataclass
 class ModelsConfigs:
     POTATO_DETECTOR_PATH: str = "models/potato_det.pt"
-    DEFECTS_CLASSIFIER_PATH: str = "models/defects_classifier_v4.pth"
+    DEFECTS_CLASSIFIER_PATH: str = "models/defects_classifier_v5.pth"
     NUM_CLASSES: int = 2
     POTATO_DETECTION_CONFIDENCE_THRESHOLD: float = 0.85
     DEFECTS_DETECTION_CONFIDENCE_THRESHOLD: float = 0.75
