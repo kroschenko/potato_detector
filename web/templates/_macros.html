@@ -1,0 +1,10 @@
+{% macro stat_card(kind, icon, title_text, value_id, caption_text, default_value) -%}
+<div class="stat-card {{ kind }}">
+    <div class="stat-header">
+        <h3>{{ title_text }}</h3>
+        <span class="stat-icon">{{ icon }}</span>
+    </div>
+    <div class="stat-value" id="{{ value_id }}">{{ default_value }}</div>
+    <div class="stat-change">{{ caption_text }}</div>
+    </div>
+{%- endmacro %}

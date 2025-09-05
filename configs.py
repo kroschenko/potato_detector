@@ -40,7 +40,7 @@ class ModelsConfigs:
 class TrackerConfigs:
     FRAME_SIZE: Tuple = (1200, 1920)
     SCANNING_WINDOW: int = 50
-    SCAN_ZONES_COUNT: int = 9
+    SCAN_ZONES_COUNT: int = 7
     VISIBLE_AREA_WIDTH_CENTIMETERS: float = 43.0
     VISIBLE_AREA_HEIGHT_CENTIMETERS: float = 25.0
 
@@ -63,22 +63,23 @@ class CameraConfigs:
     CAMERA_FRAME_SHAPE: Tuple = (1080, 1920, 3)
     PREFERRED_CAMERA_DEVICE: CameraType = CameraType.AVI_CAMERA
     AVI_CAMERA_LOOP: bool = False
-    AVI_CAMERA_FPS: int = 130
+    AVI_CAMERA_FPS: int = 40
     AVI_CAMERA_START_FRAME: int = 0
     AVI_CAMERA_PATH: str = os.path.join(
-        os.path.expanduser("./video/"), "BAD_3.wmv"
+        os.path.expanduser("./video/"), "BAD_2.wmv"
     )
     DO3THINK_CAMERA_NAME: str = "DO3THINK-04B400000199-"
+    TARGET_STREAM_FPS: int = 40
 
 
 @dataclass
 class ArduinoConfigs:
-    USE_AIR: bool = True
-    ARDUINO_ONLINE: bool = True
+    USE_AIR: bool = False
+    ARDUINO_ONLINE: bool = False
     FIRST_NOZZLE_MNEMONIC = "R1"
     SECOND_NOZZLE_MNEMONIC = "R2"
     LED_MNEMONIC = "P"
     PIN_HIGH = "1"
     PIN_LOW = "0"
     ARDUINO_BAUD_RATE = 115200
-    ARDUINO_PORT = "/dev/cu.usbserial-120"
+    ARDUINO_PORT = "/dev/ttyUSB0"

@@ -184,6 +184,7 @@ class PotatoTracker:
     def add_defected_potato_to_queue(self, _id, potato_obj):
         logger.info(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
         self.total_defects_detected += 1
+        potato_obj.added_to_queue = True
         if ArduinoConfigs.USE_AIR:
             center = potato_obj.center[1]
             potato_obj.camera_id = 1 if center > self.camera_split_line else 0

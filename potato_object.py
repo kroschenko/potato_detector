@@ -5,3 +5,4 @@ class PotatoObject:
         self.bounds = None
         self.final_evaluation_complete = False
         self.img_patches = []
+        self.added_to_queue = False

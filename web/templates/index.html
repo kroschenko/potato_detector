@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сортировщик картофеля</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <script src="{{ url_for('serve_libs', filename='socket.io.min.js') }}" defer></script>
+    <script src="{{ url_for('serve_libs', filename='chart.min.js') }}" defer></script>
+    
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">Сортировщик картофеля</h1>
+            </div>
+        </header>
+
+        <div class="content-wrapper">
+            <nav class="tab-navigation">
+                <button class="tab-button active" data-tab="statistics">
+                    <span class="tab-icon">📊</span>
+                    <span class="tab-label">Статистика</span>
+                </button>
+                <button class="tab-button" data-tab="configuration">
+                    <span class="tab-icon">⚙️</span>
+                    <span class="tab-label">Настройки</span>
+                </button>
+                <button class="tab-button" data-tab="camera">
+                    <span class="tab-icon">📷</span>
+                    <span class="tab-label">Отладка</span>
+                </button>
+            </nav>
+
+            <main class="main-content">
+            <div class="tab-content active" id="statistics-tab">
+                <div class="statistics-container">
+                    {% from "_macros.html" import stat_card %}
+                    <div class="stats-grid">
+                        {{ stat_card('primary', '🥔', 'Всего картофелин', 'total-potatoes', 'С начала работы', '0') }}
+                        {{ stat_card('warning', '⚠️', 'Дефектные', 'defected-potatoes', 'Включая мелкие', '0') }}
+                        {{ stat_card('info', '📈', 'Доля дефектов', 'defect-rate', 'Процент дефектов', '0%') }}
+                        {{ stat_card('success', '⚡', 'Производительность', 'processing-rate', 'Картофелин в минуту', '0') }}
+                    </div>
+                    
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <h3>Производительность по времени</h3>
+                            <canvas id="detection-chart"></canvas>
+                        </div>
+                        <div class="chart-card circular-chart">
+                            <h3>Распределение качества</h3>
+                            <canvas id="quality-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="camera-tab">
+                <div class="camera-logs-container">
+                    <div class="camera-panel">
+                        <div class="camera-container">
+                            <div class="video-container">
+                                <img id="camera-stream" class="camera-feed" loading="lazy" alt="" style="display: none;" />
+                                <div class="video-overlay">
+                                    <div class="overlay-top">
+                                        <div class="overlay-status">
+                                            <span class="status-text">Онлайн трансляция</span>
+                                            <div class="status-dot"></div>
+                                        </div>
+                                    </div>
+                                    <div class="overlay-controls">
+                                        <button class="control-icon-button" id="toggle-camera" title="">
+                                            <span class="control-icon" id="control-icon" aria-hidden="true"></span>
+                                        </button>
+                                        <button class="control-icon-button" id="fullscreen-button" title="">
+                                            <span class="control-icon">⛶</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="resize-handle" id="resize-handle"></div>
+                    
+                    <div class="logs-panel">
+                        <div class="logs-container">
+                            <div class="logs-header">
+                                <div class="logs-title-row">
+                                    <h3>Системные логи</h3>
+                                </div>
+                                <div class="logs-controls-row">
+                                    <button class="logs-button" id="clear-logs">Очистить логи</button>
+                                    <button class="logs-button" id="export-logs">Экспорт логов</button>
+                                </div>
+                            </div>
+                            <div class="logs-content" id="logs-output">
+                                <div class="log-entry info">
+                                    <span class="log-time">Система инициализирована</span>
+                                    <span class="log-message">Сортировщик картофеля успешно запущен</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="configuration-tab">
+                <div class="config-container">
+                    <form id="config-form">
+                        <div class="config-section">
+                            <h3>
+                                <span class="section-icon">🔧</span>
+                                <span>Параметры обнаружения</span>
+                            </h3>
+                            <div class="config-grid">
+                                <div class="config-item status-item">
+                                    <label class="config-label" for="sort-by-size-toggle">Сортировать по размеру</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="sort-by-size-toggle" class="toggle-input">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="config-item status-item">
+                                    <label class="config-label" for="sort-by-defects-toggle">Сортировать по внешним дефектам</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="sort-by-defects-toggle" class="toggle-input">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="config-item">
+                                    <label class="config-label" for="size-limit-input">Порог размера картофелины (см)</label>
+                                    <input type="number" id="size-limit-input" class="config-input" step="0.1" min="0" max="20">
+                                </div>
+                                
+                                <div class="config-item">
+                                    <label class="config-label" for="confidence-threshold-input">Порог уверенности обнаружения</label>
+                                    <input type="number" id="confidence-threshold-input" class="config-input" step="0.01" min="0" max="1">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="config-section">
+                            <h3>
+                                <span class="section-icon">📷</span>
+                                <span>Настройки камеры</span>
+                            </h3>
+                            <div class="config-grid">
+                                <div class="config-item">
+                                    <label class="config-label" for="visible-width-input">Ширина видимой области (см)</label>
+                                    <input type="number" id="visible-width-input" class="config-input" step="0.1" min="1" max="100">
+                                </div>
+                                
+                                <div class="config-item">
+                                    <label class="config-label" for="visible-height-input">Высота видимой области (см)</label>
+                                    <input type="number" id="visible-height-input" class="config-input" step="0.1" min="1" max="100">
+                                </div>
+                                
+                                <div class="config-item">
+                                    <label class="config-label">Размер кадра</label>
+                                    <span class="config-value" id="frame-size-display">1200 x 1920</span>
+                                </div>
+                                
+                                <div class="config-item">
+                                    <label class="config-label">Тип камеры</label>
+                                    <span class="config-value" id="camera-type-display">AVI File Camera</span>
+                                </div>
+                                
+                                <div class="config-item" id="video-file-item" style="display: none;">
+                                    <label class="config-label" for="video-file-select">Видеофайл</label>
+                                    <select id="video-file-select" class="config-input">
+                                        <option value="">Выберите видеофайл...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="config-section">
+                            <h3>
+                                <span class="section-icon">⚙️</span>
+                                <span>Настройки Arduino</span>
+                            </h3>
+                            <div class="config-grid">
+                                <div class="config-item">
+                                    <label class="config-label" for="nozzle-open-time-input">Время открытия сопла (мс)</label>
+                                    <input type="number" id="nozzle-open-time-input" class="config-input" step="1" min="1" max="10000">
+                                </div>
+                                
+                                <div class="config-item">
+                                    <label class="config-label" for="left-nozzle-delay-input">Задержка левого сопла (мс)</label>
+                                    <input type="number" id="left-nozzle-delay-input" class="config-input" step="1" min="1" max="10000">
+                                </div>
+                                
+                                <div class="config-item">
+                                    <label class="config-label" for="right-nozzle-delay-input">Задержка правого сопла (мс)</label>
+                                    <input type="number" id="right-nozzle-delay-input" class="config-input" step="1" min="1" max="10000">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="config-actions">
+                            <button type="button" id="save-config" class="config-button save">Сохранить настройки</button>
+                            <button type="button" id="reset-config" class="config-button reset">Сбросить</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app-bootstrap.js') }}" type="module" defer></script>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/statistics.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/camera.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/config.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/logs.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/resize-manager.js') }}" defer></script>
+</body>
+</html>

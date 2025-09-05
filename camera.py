@@ -33,6 +33,9 @@ class Camera:
     def device_is_activated(self):
         pass
 
+    def restart_stream(self):
+        pass
+
 
 class DO3ThinkCamera(Camera):
     def __init__(self, cam_descriptor: str = None):
@@ -49,23 +52,59 @@ class DO3ThinkCamera(Camera):
         return self.device is not None
 
     def start_stream(self):
+        if self.device is None:
+            return
         payload = self.device.get_payload()
         self.stream = self.device.create_stream(None, None)
-        self.stream.push_buffer(Aravis.Buffer.new_allocate(payload))
+        for _ in range(32):
+            self.stream.push_buffer(Aravis.Buffer.new_allocate(payload))
+        try:
+            self.device.set_acquisition_mode(Aravis.AcquisitionMode.CONTINUOUS)
+        except Exception:
+            pass
         self.device.start_acquisition()
 
     def get_next_frame(self):
-        frame = None
-        if self.stream:
-            buffer = self.stream.try_pop_buffer()
-            if buffer:
-                frame = DO3ThinkCamera._convert(buffer)
-                self.stream.push_buffer(buffer)  # push buffer back into stream
+        if not self.stream:
+            return None
+        buffer = self.stream.pop_buffer()
+        if not buffer:
+            return None
+        if hasattr(buffer, "get_status"):
+            status = buffer.get_status()
+            if status != Aravis.BufferStatus.SUCCESS:
+                self.stream.push_buffer(buffer)
+                return None
+        frame = DO3ThinkCamera._convert(buffer)
+        self.stream.push_buffer(buffer)
         return frame
 
     def stop_stream(self):
-        self.device.stop_acquisition()
+        if self.device is not None:
+            self.device.stop_acquisition()
         self.stream = None
+
+    def restart_stream(self):
+        if self.stream is not None and self.device is not None:
+            try:
+                self.device.stop_acquisition()
+            except Exception:
+                pass
+        if self.device is None:
+            try:
+                self.device = Aravis.Camera.new(self.cam_descriptor)
+            except gi.repository.GLib.Error:
+                self.device = None
+                return
+        payload = self.device.get_payload()
+        self.stream = self.device.create_stream(None, None)
+        for _ in range(32):
+            self.stream.push_buffer(Aravis.Buffer.new_allocate(payload))
+        try:
+            self.device.set_acquisition_mode(Aravis.AcquisitionMode.CONTINUOUS)
+        except Exception:
+            pass
+        self.device.start_acquisition()
 
     @staticmethod
     def _convert(buf):
@@ -87,7 +126,7 @@ class OpenCVCamera(Camera):
         self.device = cv2.VideoCapture(self.cam_descriptor)
 
     def device_is_activated(self):
-        return self.device is not None
+        return self.device is not None and self.device.isOpened()
 
     def start_stream(self):
         pass
@@ -100,6 +139,11 @@ class OpenCVCamera(Camera):
 
     def stop_stream(self):
         self.device.release()
+
+    def restart_stream(self):
+        if self.device is not None and self.device.isOpened():
+            return
+        self.device = cv2.VideoCapture(self.cam_descriptor)
 
 
 class AVICamera(Camera):
@@ -201,3 +245,19 @@ class AVICamera(Camera):
         if self.device is not None:
             self.device.release()
             logger.info("Stream stopped and resources released")
+
+    def restart_stream(self):
+        if self.device is not None and self.device.isOpened():
+            return
+        logger.info("Reopening AVI stream")
+        self.device = cv2.VideoCapture(self.cam_descriptor)
+        if not self.device.isOpened():
+            logger.error("Failed to reopen AVI stream")
+            return
+        if 0 <= self.current_frame < self.frame_count:
+            success = self.device.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame)
+            if success:
+                logger.info(f"Resumed at frame {self.current_frame}")
+            else:
+                logger.warning("Failed to set resume frame position")
+        self.last_frame_time = 0
