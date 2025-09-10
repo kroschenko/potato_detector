@@ -64,11 +64,7 @@ class Runner:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         self.tracker.update(frame)
 
-        current_objects_total_count = self.tracker.get_total_objects_count()
-        if current_objects_total_count > self.prev_total_objects_count:
-            self.counter += 1
-            logger.info(f"{Messages.OBJECTS_COUNT} {self.counter}")
-            self.prev_total_objects_count = current_objects_total_count
+        self.counter = self.tracker.get_total_objects_count()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Override closeEvent to log statistics before closing"""
