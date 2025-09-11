@@ -8,7 +8,7 @@ class Color:
 
 
 class Messages:
-    APPEND_DAMAGED_POTATOES: str = "добавлен в список поврежденных клубней"
+    APPEND_DAMAGED_POTATOES: str = "добавлен в список поврежденных клубней, размер:"
     OBJECTS_COUNT: str = "Количество объектов:"
     FIRST_STAGE_SCANNED: str = "отсканирован в первой зоне"
     SECOND_STAGE_SCANNED: str = "отсканирован во второй зоне"
