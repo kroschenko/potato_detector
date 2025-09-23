@@ -30,9 +30,11 @@ class PotatoTracker:
     def __init__(self, frame_size, count_of_scanning_zones: int) -> None:
         self.potato_detector = YOLO(ModelsConfigs.POTATO_DETECTOR_PATH)
         self.defected_potato_classifier = torch_models.mobilenet_v3_small(weights=None)
-        self.defected_potato_classifier.classifier[3] = torch.nn.Linear(
-            self.defected_potato_classifier.classifier[3].in_features,
-            ModelsConfigs.NUM_CLASSES,
+        self.defected_potato_classifier.classifier = nn.Sequential(
+            nn.Linear(576, 512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.3),
+            nn.Linear(512, ModelsConfigs.NUM_CLASSES)
         )
 
         device = torch.device(
