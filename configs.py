@@ -15,7 +15,8 @@ class MainConfigs:
 
 @dataclass
 class SorterConfigs:
-    SORT_BY_POTATO_SIZE: bool = True
+    SORT_BY_OUTER_DEFECTS: bool = True
+    SORT_BY_POTATO_SIZE: bool = False
     SORT_BY_ROTTEN: bool = True
     SORT_BY_GREEN: bool = True
     SORT_BY_DAMAGED: bool = True

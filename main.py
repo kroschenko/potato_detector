@@ -34,7 +34,7 @@ class Runner:
 
     def null_objects_count(self):
         self.counter = 0
-        logger.info(f"{Messages.OBJECTS_COUNT} {self.counter}")
+        # logger.info(f"{Messages.OBJECTS_COUNT} {self.counter}")
 
     def activate_camera(self):
         # Запуск камеры
@@ -67,7 +67,7 @@ class Runner:
         current_objects_total_count = self.tracker.get_total_objects_count()
         if current_objects_total_count > self.prev_total_objects_count:
             self.counter += 1
-            logger.info(f"{Messages.OBJECTS_COUNT} {self.counter}")
+            # logger.info(f"{Messages.OBJECTS_COUNT} {self.counter}")
             self.prev_total_objects_count = current_objects_total_count
 
     def __exit__(self, exc_type, exc_val, exc_tb):
