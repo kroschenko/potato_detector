@@ -120,11 +120,11 @@ class PotatoTracker:
 
             pred_class = 2
 
-            if rotten_votes >= 2:
+            if rotten_votes >= 1:
                 pred_class = 3
-            elif damaged_votes >= 3:
+            elif damaged_votes >= 1:
                 pred_class = 0
-            elif green_votes >= 3:
+            elif green_votes >= 1:
                 pred_class = 1
         
         class_name = self.get_class_name(pred_class)
