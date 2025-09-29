@@ -101,32 +101,42 @@ class PotatoTracker:
         with torch.no_grad():
             eval_res = self.defected_potato_classifier(sub_imgs)
             probs = torch.nn.functional.softmax(eval_res, dim=1)
+
+            patch_max_probs, patch_preds = probs.max(dim=1)
             confidence_scores = probs.mean(dim=0)
+            confident_mask = (patch_max_probs >= ModelsConfigs.DEFECTS_DETECTION_CONFIDENCE_THRESHOLD)
 
-            max_scores = probs.max(dim=0).values
-            max_damaged = max_scores[0].item()
-            max_green = max_scores[1].item()
-            max_rotten = max_scores[3].item()
+            rotten_votes = (
+                (patch_preds == 3) & confident_mask
+            ).sum().item()
 
-            if max_rotten >= 0.90:
+            damaged_votes = (
+                (patch_preds == 0) & confident_mask
+            ).sum().item()
+
+            green_votes = (
+                (patch_preds == 1) & confident_mask
+            ).sum().item()
+
+            pred_class = 2
+
+            if rotten_votes >= 2:
                 pred_class = 3
-            elif max_damaged >= 0.90:
+            elif damaged_votes >= 3:
                 pred_class = 0
-            elif max_green >= 0.90:
+            elif green_votes >= 3:
                 pred_class = 1
-            else:
-                pred_class = 2
         
         class_name = self.get_class_name(pred_class)
         rejection_reasons = []
         
         if pred_class == 0 and SorterConfigs.SORT_BY_DAMAGED:
-            rejection_reasons.append(f"классифицирован как {class_name}")
+            rejection_reasons.append(f"классифицирован как {class_name} (голоса: {damaged_votes})") 
         elif pred_class == 1 and SorterConfigs.SORT_BY_GREEN:
-            rejection_reasons.append(f"классифицирован как {class_name}")
+            rejection_reasons.append(f"классифицирован как {class_name} (голоса: {green_votes})") 
         elif pred_class == 3 and SorterConfigs.SORT_BY_ROTTEN:
-            rejection_reasons.append(f"классифицирован как {class_name}")
-        
+            rejection_reasons.append(f"классифицирован как {class_name} (голоса: {rotten_votes})")
+
         return pred_class, confidence_scores, rejection_reasons
 
     def evaluate_potato_size(self, potato_obj):
@@ -149,11 +159,11 @@ class PotatoTracker:
         decision_log = f"Клубень {potato_id}: "
         
         if pred_class is not None:
-            class_name = self.get_class_name(pred_class)
-            confidence_str = self.format_confidence_scores(confidence_scores)
-            decision_log += f"классифицирован как {class_name} {confidence_str}, "
+            # class_name = self.get_class_name(pred_class)
+            # confidence_str = self.format_confidence_scores(confidence_scores)
+            decision_log += f"{', '.join(all_rejection_reasons)}"
         
-        decision_log += f"size {width_cm:.1f}×{height_cm:.1f} cm"
+        decision_log += f" size {width_cm:.1f}×{height_cm:.1f} cm"
         
         if should_reject:
             decision_log += f" → ОТКЛОНЕН"
