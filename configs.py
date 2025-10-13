@@ -16,11 +16,11 @@ class MainConfigs:
 @dataclass
 class SorterConfigs:
     SORT_BY_OUTER_DEFECTS: bool = True
-    SORT_BY_POTATO_SIZE: bool = False
+    SORT_BY_POTATO_SIZE: bool = True
     SORT_BY_ROTTEN: bool = True
     SORT_BY_GREEN: bool = True
     SORT_BY_DAMAGED: bool = True
-    POTATO_SIZE_LIMIT_CENTIMETERS: float = 4.0
+    POTATO_SIZE_LIMIT_CENTIMETERS: float = 35
 
 
 @dataclass
@@ -35,7 +35,7 @@ class ModelsConfigs:
     POTATO_DETECTOR_PATH: str = "models/potato_det.pt"
     DEFECTS_CLASSIFIER_PATH: str = "models/4_classes_classifier_67.pth"
     NUM_CLASSES: int = 4
-    POTATO_DETECTION_CONFIDENCE_THRESHOLD: float = 0.85
+    POTATO_DETECTION_CONFIDENCE_THRESHOLD: float = 0.6
     DEFECTS_DETECTION_CONFIDENCE_THRESHOLD: float = 0.75
 
 
@@ -64,7 +64,7 @@ class CameraConfigs:
                 """
     CAMERA_AUTOSTART: bool = True
     CAMERA_FRAME_SHAPE: Tuple = (1080, 1920, 3)
-    PREFERRED_CAMERA_DEVICE: CameraType = CameraType.AVI_CAMERA
+    PREFERRED_CAMERA_DEVICE: CameraType = CameraType.DO3THINK_CAMERA
     AVI_CAMERA_LOOP: bool = False
     AVI_CAMERA_FPS: int = 130
     AVI_CAMERA_START_FRAME: int = 0
@@ -84,4 +84,6 @@ class ArduinoConfigs:
     PIN_HIGH = "1"
     PIN_LOW = "0"
     ARDUINO_BAUD_RATE = 115200
-    ARDUINO_PORT = "/dev/cu.usbserial-120"
+    ARDUINO_PORT = "/dev/ttyUSB0"
+    NOZZLE_DELAY_BEFORE_OPEN_TOP: int = 420
+    NOZZLE_DELAY_BEFORE_OPEN_BOTTOM: int = 600
