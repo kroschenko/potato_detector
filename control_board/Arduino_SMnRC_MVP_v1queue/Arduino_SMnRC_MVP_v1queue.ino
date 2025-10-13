@@ -175,14 +175,15 @@ void loop() {
   // Serial command reader
   if (Serial.available() > 0) {
     String input = Serial.readStringUntil('\n');
+    bool handled = false;
     if (input.length() > 0 && input[0] == 'D') {
       if (!update_nozzle_delays(input)) {
         Serial.println(F("Failed to parse nozzle delays"));
         show_config();
       }
-      continue;
+      handled = true;
     }
-    if (input.length() == 2) {
+    if (!handled && input.length() == 2) {
       bool state = 0;
       bool set = 0;      
       if (input[1]=='1')
@@ -210,7 +211,7 @@ void loop() {
         timeout = 0;
         red_LED = false;
       }
-    } else {
+    } else if (!handled) {
       Serial.print(F("Failed, length obtained: "));
       Serial.println(input.length());
       show_config();

@@ -7,6 +7,7 @@ from factories import CameraFactory
 from tracker import PotatoTracker
 from logger_config import logger
 from arduino import led_on
+from arduino.utils import apply_nozzle_delays
 from main_types import CameraType
 
 potato_defects_queue = []
@@ -82,6 +83,7 @@ class Runner:
 
 
 if __name__ == "__main__":
+    apply_nozzle_delays()
     led_on()
     with Runner() as runner:
         pass
