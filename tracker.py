@@ -4,6 +4,7 @@ from norfair import Detection, Tracker
 from ultralytics import YOLO
 from torchvision import models as torch_models
 import torch.nn as nn
+import time
 
 from configs import ArduinoConfigs, MainConfigs, ModelsConfigs, SorterConfigs, TrackerConfigs
 from constants import Messages
@@ -59,6 +60,7 @@ class PotatoTracker:
         logger.debug(f"Frame size: {frame_size}")
         self.total_defects_detected = 0
         self.camera_split_line = frame_size[0] // 2
+        self.last_nozzle_request_time = time.time()
 
     def cleanup(self):
         """Clean up resources and reset state"""
@@ -264,6 +266,8 @@ class PotatoTracker:
             center = potato_obj.center[1]
             potato_obj.camera_id = 1 if center > self.camera_split_line else 0
             activate_nozzle(potato_obj.camera_id)
+            logger.info(f"Time from last nozzle request: {time.time()-self.last_nozzle_request_time}")
+            self.last_nozzle_request_time = time.time()
 
     def get_size_centimeters(self, potato_obj):
         if not potato_obj.bounds:
