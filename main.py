@@ -7,6 +7,7 @@ from factories import CameraFactory
 from tracker import PotatoTracker
 from logger_config import logger
 from arduino import led_on
+from arduino.utils import apply_nozzle_delays
 from main_types import CameraType
 
 potato_defects_queue = []
@@ -34,7 +35,7 @@ class Runner:
 
     def null_objects_count(self):
         self.counter = 0
-        logger.info(f"{Messages.OBJECTS_COUNT} {self.counter}")
+        # logger.info(f"{Messages.OBJECTS_COUNT} {self.counter}")
 
     def activate_camera(self):
         # Запуск камеры
@@ -67,7 +68,7 @@ class Runner:
         current_objects_total_count = self.tracker.get_total_objects_count()
         if current_objects_total_count > self.prev_total_objects_count:
             self.counter += 1
-            logger.info(f"{Messages.OBJECTS_COUNT} {self.counter}")
+            # logger.info(f"{Messages.OBJECTS_COUNT} {self.counter}")
             self.prev_total_objects_count = current_objects_total_count
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -82,6 +83,7 @@ class Runner:
 
 
 if __name__ == "__main__":
+    apply_nozzle_delays()
     led_on()
     with Runner() as runner:
         pass

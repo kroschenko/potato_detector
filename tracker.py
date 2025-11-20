@@ -3,8 +3,10 @@ import torch
 from norfair import Detection, Tracker
 from ultralytics import YOLO
 from torchvision import models as torch_models
+import torch.nn as nn
+import time
 
-from configs import ArduinoConfigs, MainConfigs, ModelsConfigs, TrackerConfigs
+from configs import ArduinoConfigs, MainConfigs, ModelsConfigs, SorterConfigs, TrackerConfigs
 from constants import Messages
 from potato_object import PotatoObject
 from utils import init_frames, save_frame
@@ -27,16 +29,20 @@ data_transform = transforms.Compose(
 
 
 class PotatoTracker:
+    CLASS_NAMES = {0: "повр", 1: "зел", 2: "здор", 3: "гнил"}
+
     def __init__(self, frame_size, count_of_scanning_zones: int) -> None:
         self.potato_detector = YOLO(ModelsConfigs.POTATO_DETECTOR_PATH)
         self.defected_potato_classifier = torch_models.mobilenet_v3_small(weights=None)
-        self.defected_potato_classifier.classifier[3] = torch.nn.Linear(
-            self.defected_potato_classifier.classifier[3].in_features,
-            ModelsConfigs.NUM_CLASSES,
+        self.defected_potato_classifier.classifier = nn.Sequential(
+            nn.Linear(576, 512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=0.3),
+            nn.Linear(512, ModelsConfigs.NUM_CLASSES)
         )
 
         device = torch.device(
-            "cuda" if torch.cuda.is_available() else MainConfigs.DEFAULT_DEVICE
+            MainConfigs.CUDA_DEVICE if torch.cuda.is_available() else MainConfigs.DEFAULT_DEVICE
         )
         self.potato_detector.to(device)
         self.defected_potato_classifier.load_state_dict(
@@ -54,6 +60,7 @@ class PotatoTracker:
         logger.debug(f"Frame size: {frame_size}")
         self.total_defects_detected = 0
         self.camera_split_line = frame_size[0] // 2
+        self.last_nozzle_request_time = time.time()
 
     def cleanup(self):
         """Clean up resources and reset state"""
@@ -75,12 +82,98 @@ class PotatoTracker:
         return self.tracker.total_object_count
 
     def log_final_statistics(self, total_counter):
-        """Log final statistics about processed potatoes and detected defects"""
-        logger.info(f"Total potatoes processed: {total_counter}")
-        logger.info(f"Total defects detected: {self.total_defects_detected}")
+        logger.info(f"Всего обработано клубней: {total_counter}")
+        logger.info(f"Всего обнаружено дефектов: {self.total_defects_detected}")
         logger.info(
-            f"Defect rate: {(self.total_defects_detected/total_counter*100 if total_counter > 0 else 0):.2f}%"
+            f"Доля дефектов: {(self.total_defects_detected/total_counter*100 if total_counter > 0 else 0):.2f}%"
         )
+
+    def get_class_name(self, class_index):
+        return self.CLASS_NAMES.get(class_index, "неизвестный")
+
+    def format_confidence_scores(self, confidence_scores):
+        return "[" + ", ".join([f"{self.CLASS_NAMES[i]}:{conf:.2f}" for i, conf in enumerate(confidence_scores)]) + "]"
+
+    def evaluate_potato_classification(self, potato_obj):
+        if not SorterConfigs.SORT_BY_OUTER_DEFECTS or not potato_obj.img_patches:
+            return None, None, []
+        
+        sub_imgs = torch.stack(potato_obj.img_patches, dim=0)
+        sub_imgs = sub_imgs.to(next(self.defected_potato_classifier.parameters()).device)
+        with torch.no_grad():
+            eval_res = self.defected_potato_classifier(sub_imgs)
+            probs = torch.nn.functional.softmax(eval_res, dim=1)
+
+            patch_max_probs, patch_preds = probs.max(dim=1)
+            confidence_scores = probs.mean(dim=0)
+            confident_mask = (patch_max_probs >= ModelsConfigs.DEFECTS_DETECTION_CONFIDENCE_THRESHOLD)
+
+            rotten_votes = (
+                (patch_preds == 3) & confident_mask
+            ).sum().item()
+
+            damaged_votes = (
+                (patch_preds == 0) & confident_mask
+            ).sum().item()
+
+            green_votes = (
+                (patch_preds == 1) & confident_mask
+            ).sum().item()
+
+            pred_class = 2
+
+            if rotten_votes >= 1:
+                pred_class = 3
+            elif damaged_votes >= 1:
+                pred_class = 0
+            elif green_votes >= 1:
+                pred_class = 1
+        
+        class_name = self.get_class_name(pred_class)
+        rejection_reasons = []
+        
+        if pred_class == 0 and SorterConfigs.SORT_BY_DAMAGED:
+            rejection_reasons.append(f"классифицирован как {class_name} (голоса: {damaged_votes})") 
+        elif pred_class == 1 and SorterConfigs.SORT_BY_GREEN:
+            rejection_reasons.append(f"классифицирован как {class_name} (голоса: {green_votes})") 
+        elif pred_class == 3 and SorterConfigs.SORT_BY_ROTTEN:
+            rejection_reasons.append(f"классифицирован как {class_name} (голоса: {rotten_votes})")
+
+        return pred_class, confidence_scores, rejection_reasons
+
+    def evaluate_potato_size(self, potato_obj):
+        rejection_reasons = []
+        width_cm, height_cm = self.get_size_centimeters(potato_obj)
+        
+        if SorterConfigs.SORT_BY_POTATO_SIZE:
+            if width_cm < SorterConfigs.POTATO_SIZE_LIMIT_CENTIMETERS or height_cm < SorterConfigs.POTATO_SIZE_LIMIT_CENTIMETERS:
+                rejection_reasons.append(f"мал ({width_cm:.1f}×{height_cm:.1f} см)")
+        
+        return width_cm, height_cm, rejection_reasons
+
+    def make_final_decision(self, potato_id, potato_obj, class_result, size_result):
+        pred_class, confidence_scores, class_rejection_reasons = class_result
+        width_cm, height_cm, size_rejection_reasons = size_result
+        
+        all_rejection_reasons = class_rejection_reasons + size_rejection_reasons
+        should_reject = len(all_rejection_reasons) > 0
+        
+        decision_log = f"Клубень {potato_id}: "
+        
+        if pred_class is not None:
+            # class_name = self.get_class_name(pred_class)
+            # confidence_str = self.format_confidence_scores(confidence_scores)
+            decision_log += f"{', '.join(all_rejection_reasons)}"
+        
+        decision_log += f" size {width_cm:.1f}×{height_cm:.1f} cm"
+        
+        if should_reject:
+            decision_log += f" → ОТКЛОНЕН"
+            logger.info(decision_log)
+            self.add_rejected_potato_to_queue(potato_id, potato_obj, all_rejection_reasons)
+        else:
+            decision_log += " → ПРИНЯТ"
+            logger.info(decision_log)
 
     def update(self, frame):
         if frame is not None:
@@ -159,15 +252,33 @@ class PotatoTracker:
                     0 in potato_obj.sections_scanned
                     and not potato_obj.final_evaluation_complete
                 ):
-                    sub_imgs = torch.stack(potato_obj.img_patches, dim=0)
-                    with torch.no_grad():
-                        eval_res = self.defected_potato_classifier(sub_imgs).sum(dim=0)
-                    pred_class = eval_res.argmax(dim=0).item()
-                    if pred_class == 0:  # and abs(eval_res[0][1]-eval_res[0][0]) > 15:
-                        logger.info(f"{_id} {Messages.APPEND_DAMAGED_POTATOES}")
-                        self.total_defects_detected += 1
-                        if ArduinoConfigs.USE_AIR:
-                            center = potato_obj.center[1]
-                            potato_obj.camera_id = 1 if center > self.camera_split_line else 0
-                            activate_nozzle(potato_obj.camera_id)
+                    class_result = self.evaluate_potato_classification(potato_obj)
+                    size_result = self.evaluate_potato_size(potato_obj)
+                    self.make_final_decision(_id, potato_obj, class_result, size_result)
                     potato_obj.final_evaluation_complete = True
+
+    def add_rejected_potato_to_queue(self, _id, potato_obj, rejection_reasons):
+        width_cm, height_cm = self.get_size_centimeters(potato_obj)
+        reason_str = ", ".join(rejection_reasons)
+        logger.debug(f"{_id} {Messages.APPEND_DAMAGED_POTATOES} {width_cm:.1f}×{height_cm:.1f} см - Причина: {reason_str}")
+        self.total_defects_detected += 1
+        if ArduinoConfigs.USE_AIR:
+            center = potato_obj.center[1]
+            potato_obj.camera_id = 1 if center > self.camera_split_line else 0
+            activate_nozzle(potato_obj.camera_id)
+            logger.info(f"Time from last nozzle request: {time.time()-self.last_nozzle_request_time}")
+            self.last_nozzle_request_time = time.time()
+
+    def get_size_centimeters(self, potato_obj):
+        if not potato_obj.bounds:
+            return 0.0, 0.0
+        x0, y0, x1, y1 = potato_obj.bounds
+        width_pixels = x1 - x0
+        height_pixels = y1 - y0
+        width_cm = width_pixels * (
+            TrackerConfigs.VISIBLE_AREA_WIDTH_CENTIMETERS / TrackerConfigs.FRAME_SIZE[1]
+        )
+        height_cm = height_pixels * (
+            TrackerConfigs.VISIBLE_AREA_HEIGHT_CENTIMETERS / TrackerConfigs.FRAME_SIZE[0]
+        )
+        return width_cm, height_cm
